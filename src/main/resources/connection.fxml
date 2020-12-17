@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+<?import ua.itea.gui.LocalFileRow?>
+
+<SplitPane xmlns:fx="http://javafx.com/fxml" fx:id="splitPane">
+	<items>
+		<BorderPane fx:id="leftBorderPane">
+			<left>
+				<VBox>
+					<Button text="Add Files" fx:id="addFiles" />
+					<Button text="Remove Files" fx:id="removeFiles" />
+				</VBox>
+			</left>
+			<center>
+				<TableView fx:id="localComputer"
+					TableMenuButtonVisible="true">
+					<columns>
+						<TableColumn text="Name">
+							<cellValueFactory>
+								<PropertyValueFactory property="fileName" />
+							</cellValueFactory>
+						</TableColumn>
+						<TableColumn text="Path">
+							<cellValueFactory>
+								<PropertyValueFactory property="filePath" />
+							</cellValueFactory>
+						</TableColumn>
+						<TableColumn text="Size">
+							<cellValueFactory>
+								<PropertyValueFactory property="fileSize" />
+							</cellValueFactory>
+						</TableColumn>
+						<TableColumn text="Total">
+							<cellValueFactory>
+								<PropertyValueFactory
+									property="totalFileSize" />
+							</cellValueFactory>
+						</TableColumn>
+						<TableColumn text="Progress">
+							<cellValueFactory>
+								<PropertyValueFactory
+									property="progressBar" />
+							</cellValueFactory>
+						</TableColumn>
+					</columns>
+				</TableView>
+			</center>
+			<bottom>
+				<ProgressBar />
+			</bottom>
+		</BorderPane>
+		<BorderPane fx:id="rightBorderPane">
+			<center>
+				<TableView fx:id="remoteComputer"
+					TableMenuButtonVisible="true">
+				</TableView>
+			</center>
+			<bottom>
+				<ProgressBar />
+			</bottom>
+		</BorderPane>
+	</items>
+</SplitPane>

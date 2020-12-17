@@ -1,0 +1,20 @@
+.progress-bar {
+	/* -fx-accent: blue; */   /* completed */
+	/* -fx-accent: green; */  /* running */
+	/* -fx-accent: orange; */ /* paused/waiting */
+	/* -fx-accent: red; */    /* stopped/canceled/corrupted */
+	
+	background-color: green;
+	width: 100%;
+	padding: 0px;
+	margin: 0px;
+	-fx-insets: 0px;
+}
+
+/* .table-column {
+  -fx-alignment: center-right;
+} */
+
+.button {
+	-fx-halignment: right;
+}
