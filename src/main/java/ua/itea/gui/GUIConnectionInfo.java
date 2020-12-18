@@ -1,11 +1,11 @@
 package ua.itea.gui;
 
-public class ConnectionInfo {
+public class GUIConnectionInfo {
 	private String address;
 	private String port;
 	private String name;
 	
-	public ConnectionInfo(String address, String port, String name) {
+	public GUIConnectionInfo(String address, String port, String name) {
 		this.address = address;
 		this.port = port;
 		setNameImpl(name);

@@ -4,18 +4,18 @@ import java.io.IOException;
 import java.net.URL;
 
 import javafx.fxml.FXMLLoader;
-import ua.itea.gui.ApplicationImpl;
-import ua.itea.gui.ConnectionDialogSimple;
+import ua.itea.gui.GUIApplicationImpl;
+import ua.itea.gui.GUIConnectionDialogSimple;
 
-public class ConnectionDialogSimpleCachedGUIFactory implements ConnectionDialogGUIFactory {
-	private static ConnectionDialogSimple CREATE_CONNECTION_DIALOG;
+public class GUIConnectionDialogSimpleCachedFactory implements GUIConnectionDialogFactory {
+	private static GUIConnectionDialogSimple CREATE_CONNECTION_DIALOG;
 	
 	@Override
-	public ConnectionDialogSimple create() throws IOException {
+	public GUIConnectionDialogSimple create() throws IOException {
 		if (CREATE_CONNECTION_DIALOG == null) {
-			CREATE_CONNECTION_DIALOG = new ConnectionDialogSimple();
+			CREATE_CONNECTION_DIALOG = new GUIConnectionDialogSimple();
 			
-			ClassLoader classLoader = ApplicationImpl.class.getClassLoader();
+			ClassLoader classLoader = GUIApplicationImpl.class.getClassLoader();
 			URL url = classLoader.getResource("create-connection.fxml");
 			FXMLLoader loader = new FXMLLoader(url);
 			

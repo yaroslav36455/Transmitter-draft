@@ -1,24 +1,47 @@
 package ua.itea.model;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
+import java.util.concurrent.TimeUnit;
 
 public class Channel implements Runnable, AutoCloseable {
-	private Socket socket;
+	private LocalFileBase localFileBase;
 	private Reader reader;
 	private Writer writer;
+	private Socket socket;
 	private boolean server;
 
-	public Channel(Socket socket, LocalFileBase fileBase) {
-		this.socket = socket;
-		this.reader = new Reader(fileBase.getReadableBase());
-		this.writer = new Writer(fileBase.getWritableBase(), new LoadLimit(50000));
-		
-		this.server = true;
-		
+	public Channel() {
+		this.reader = new Reader();
+		this.writer = new Writer();
+		this.writer.setDownloadLimit(new LoadLimit(50));
+	}
+	
+	public void start(boolean server) {
+		this.server = server;
 		new Thread(this).start();
+	}
+	
+	public Socket getSocket() {
+		return socket;
+	}
+
+	public void setSocket(Socket socket) {
+		this.socket = socket;
+	}
+
+	public LocalFileBase getLocalFileBase() {
+		return localFileBase;
+	}
+	
+	public void setLocalFileBase(LocalFileBase localFileBase) {
+		this.localFileBase = localFileBase;
+		writer.setFileBase(localFileBase.getWritableBase());
+		reader.setFileBase(localFileBase.getReadableBase());
 	}
 
 	@Override
@@ -51,7 +74,6 @@ public class Channel implements Runnable, AutoCloseable {
 		try {
 			if (!server) {
 				Message message = new Message();
-				
 				message.setDataRequest(writer.createRequest());
 				oos.writeObject(message);
 				
@@ -69,11 +91,16 @@ public class Channel implements Runnable, AutoCloseable {
 //			}
 			
 			while (true) {
-				System.out.println("*");
+				if (server) {
+					System.out.println("server");
+				} else {
+					System.out.println("client");
+				}
+
 				Message message = (Message) ois.readObject();
 				
-				DataRequest dataRequest = message.getDataRequest(); // Дать Reader на обработку
-				DataAnswer dataAnswer = message.getDataAnswer(); // Дать Writer на обработку
+				DataRequest dataRequest = message.getDataRequest();
+				DataAnswer dataAnswer = message.getDataAnswer();
 				
 				DataAnswer answer = reader.process(dataRequest);
 				DataRequest request = null;
@@ -89,51 +116,6 @@ public class Channel implements Runnable, AutoCloseable {
 				message.setDataAnswer(answer);
 				message.setDataRequest(request);
 				oos.writeObject(message);
-				
-				/* Поток пробуждается после:
-				 * 	  Получении сообщеия (автоматически)
-				 * 	  Добавлении файлов в локальную базу файлов 
-				 * 	  При завершении записи блока данных на диск */
-				
-				/* После записи блока данных на диск записывающий поток 
-				 * сразу сообщает об этом потоку, что поставляет эти данные,
-				 * а сам засыпает. 
-				 * Поток, что */
-				
-//				switch (message.getMessageType()) {
-//				case REGISTER_REQUEST:
-//					/* TODO add file to remotes (for downloading) */
-//					break;
-//					
-//				case REGISTER_ACCEPT:
-//					/* TODO add file to remotes (for uploading) */
-//					break;
-//
-//				case DATA_REQUEST:
-//					/* TODO add to sender queue this request */
-//					DataRequest request = (DataRequest) message.getData();
-//					
-//					/* sleep for the sender to comlete the job */
-//					sender.setDataRequest(request);
-//					
-//					break;
-//					
-//				case STOP:
-//					/* TODO just mark as stopped file only remote */
-//					break;
-//
-//				case PAUSE:
-//					/* TODO just mark as paused file only remote */
-//					break;
-//
-//				case SUCCESS:
-//					/* TODO just mark as success file only remote */
-//					break;
-//					
-//				case ERROR:
-//					/* TODO try to determine not bad blocks checking the hash code ??? */
-//					break;
-//				}
 			}
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();

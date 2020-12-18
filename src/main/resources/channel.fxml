@@ -9,15 +9,17 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.cell.PropertyValueFactory?>
-<?import ua.itea.gui.LocalFileRow?>
+<?import ua.itea.gui.GUILocalFileRow?>
 
-<SplitPane xmlns:fx="http://javafx.com/fxml" fx:id="splitPane">
+<SplitPane xmlns:fx="http://javafx.com/fxml" fx:id="splitPane"
+	stylesheets="app.css">
 	<items>
 		<BorderPane fx:id="leftBorderPane">
 			<left>
 				<VBox>
 					<Button text="Add Files" fx:id="addFiles" />
 					<Button text="Remove Files" fx:id="removeFiles" />
+					<Button text="Create Connection" fx:id="createConnection" />
 				</VBox>
 			</left>
 			<center>
@@ -34,12 +36,12 @@
 								<PropertyValueFactory property="filePath" />
 							</cellValueFactory>
 						</TableColumn>
-						<TableColumn text="Size">
+						<TableColumn text="Size" styleClass="right-to-left">
 							<cellValueFactory>
 								<PropertyValueFactory property="fileSize" />
 							</cellValueFactory>
 						</TableColumn>
-						<TableColumn text="Total">
+						<TableColumn text="Total" styleClass="right-to-left">
 							<cellValueFactory>
 								<PropertyValueFactory
 									property="totalFileSize" />

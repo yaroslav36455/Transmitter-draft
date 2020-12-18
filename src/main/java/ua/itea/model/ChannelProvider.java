@@ -3,5 +3,5 @@ package ua.itea.model;
 import java.net.Socket;
 
 public interface ChannelProvider {
-	public void create(Socket socket);
+	public void establish(Socket socket);
 }

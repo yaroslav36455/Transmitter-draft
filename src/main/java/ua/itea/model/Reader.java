@@ -4,8 +4,12 @@ import java.io.IOException;
 
 public class Reader {
 	private FileBase<LocalFileReadable> fileBase;
-	
-	public Reader(FileBase<LocalFileReadable> fileBase) {
+
+	public FileBase<LocalFileReadable> getFileBase() {
+		return fileBase;
+	}
+
+	public void setFileBase(FileBase<LocalFileReadable> fileBase) {
 		this.fileBase = fileBase;
 	}
 

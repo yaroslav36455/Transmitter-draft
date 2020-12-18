@@ -4,8 +4,7 @@ import java.io.File;
 import java.util.List;
 
 import javafx.stage.Window;
-import ua.itea.model.LocalFile;
 
-public interface FileChooserGUI {
+public interface GUIFileChooserWrapper {
 	public List<File> getFiles(Window ownerWindow);
 }

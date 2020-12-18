@@ -2,13 +2,13 @@ package ua.itea.model;
 
 import java.io.File;
 
-public class WritableFileInfo {
+public class WriteableFileInfo {
 	private FileId fileId;
 	private File file;
 	private FileTotalSize totalSize;
 	private Priority priority;
 	
-	public WritableFileInfo(FileId fileId, File file, FileTotalSize totalSize, Priority priority) {
+	public WriteableFileInfo(FileId fileId, File file, FileTotalSize totalSize, Priority priority) {
 		this.fileId = fileId;
 		this.file = file;
 		this.totalSize = totalSize;

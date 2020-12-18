@@ -2,18 +2,15 @@
 	/* -fx-accent: blue; */   /* completed */
 	/* -fx-accent: green; */  /* running */
 	/* -fx-accent: orange; */ /* paused/waiting */
-	/* -fx-accent: red; */    /* stopped/canceled/corrupted */
-	
-	background-color: green;
-	width: 100%;
-	padding: 0px;
-	margin: 0px;
-	-fx-insets: 0px;
+	-fx-accent: red;    /* stopped/canceled/corrupted */
+	-fx-max-width: 20000;
+	/* -fx-min-height: 30; */
+	-fx-indeterminate-bar-length: 300;
 }
 
-/* .table-column {
+.right-to-left {
   -fx-alignment: center-right;
-} */
+}
 
 .button {
 	-fx-halignment: right;

@@ -5,12 +5,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public class LocalFileWritable extends LocalFile {
+public class LocalFileWriteable extends LocalFile {
 	private RandomAccessFile raf;
 	private Priority priority;
 	
 	// file, fileId, totalSize, priority
-	public LocalFileWritable(WritableFileInfo fileInfo) throws IOException {
+	public LocalFileWriteable(WriteableFileInfo fileInfo) throws IOException {
 		super(fileInfo.getFileId(), fileInfo.getFile());
 		raf = new RandomAccessFile(fileInfo.getFile(), "rw");
 		priority = fileInfo.getPriority();

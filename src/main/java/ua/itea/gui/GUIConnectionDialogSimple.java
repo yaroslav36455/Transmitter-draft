@@ -13,20 +13,20 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.util.Callback;
 
-public class ConnectionDialogSimple extends Dialog<ConnectionInfo> 
+public class GUIConnectionDialogSimple extends Dialog<GUIConnectionInfo> 
 									implements Initializable {
-	private static ConnectionDialogSimple CREATE_CONNECTION_DIALOG;
+	private static GUIConnectionDialogSimple CREATE_CONNECTION_DIALOG;
 	@FXML private TextField addressTextField;
 	@FXML private TextField portTextField;
 	@FXML private TextField nameTextField;
 	private ButtonType createButton;
 	private ProgressIndicator progressIndicator;
 	
-	public static ConnectionDialogSimple get() throws IOException {
+	public static GUIConnectionDialogSimple get() throws IOException {
 		if (CREATE_CONNECTION_DIALOG == null) {
-			CREATE_CONNECTION_DIALOG = new ConnectionDialogSimple();
+			CREATE_CONNECTION_DIALOG = new GUIConnectionDialogSimple();
 			
-			ClassLoader classLoader = ApplicationImpl.class.getClassLoader();
+			ClassLoader classLoader = GUIApplicationImpl.class.getClassLoader();
 			URL url = classLoader.getResource("create-connection.fxml");
 			FXMLLoader loader = new FXMLLoader(url);
 			
@@ -46,11 +46,11 @@ public class ConnectionDialogSimple extends Dialog<ConnectionInfo>
 		setGraphic(progressIndicator);
 		getDialogPane().getButtonTypes().addAll(createButton, ButtonType.CANCEL);
 		
-		setResultConverter(new Callback<ButtonType, ConnectionInfo>() {
+		setResultConverter(new Callback<ButtonType, GUIConnectionInfo>() {
 			
 			@Override
-			public ConnectionInfo call(ButtonType param) {
-				ConnectionInfo connectionInfo = null;
+			public GUIConnectionInfo call(ButtonType param) {
+				GUIConnectionInfo connectionInfo = null;
 				System.out.println("result");
 				
 				if (param == createButton) {
@@ -58,7 +58,7 @@ public class ConnectionDialogSimple extends Dialog<ConnectionInfo>
 					String port = portTextField.getText();
 					String name = nameTextField.getText();
 
-					connectionInfo = new ConnectionInfo(address, port, name);
+					connectionInfo = new GUIConnectionInfo(address, port, name);
 				}
 				
 				return connectionInfo;

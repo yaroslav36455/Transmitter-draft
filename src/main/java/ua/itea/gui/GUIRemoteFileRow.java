@@ -1,5 +1,5 @@
 package ua.itea.gui;
 
-public class RemoteFileRow {
+public class GUIRemoteFileRow {
 	private String fileName;
 }

@@ -7,7 +7,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ProgressBar;
 
-public class LocalFileRow implements Initializable {
+public class GUILocalFileRow implements Initializable {
 	@FXML private String fileName;
 	@FXML private String filePath;
 	
@@ -19,11 +19,11 @@ public class LocalFileRow implements Initializable {
 	
 	@FXML private ProgressBar progressBar;
 	
-	public LocalFileRow() {
+	public GUILocalFileRow() {
 		/* empty */
 	}
 
-	public LocalFileRow(String fileName, String filePath,
+	public GUILocalFileRow(String fileName, String filePath,
 						String fileSize, String totalFileSize,
 			ProgressBar progressBar) {
 		this.fileName = fileName;

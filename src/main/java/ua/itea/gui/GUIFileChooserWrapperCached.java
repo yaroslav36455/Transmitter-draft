@@ -6,7 +6,7 @@ import java.util.List;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
-public class FileChooserGUICached implements FileChooserGUI {
+public class GUIFileChooserWrapperCached implements GUIFileChooserWrapper {
 	private FileChooser fileChooser;
 
 	@Override

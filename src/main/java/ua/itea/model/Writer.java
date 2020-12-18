@@ -3,14 +3,17 @@ package ua.itea.model;
 import java.io.IOException;
 
 public class Writer {
-	private FileBase<LocalFileWritable> fileBase;
+	private FileBase<LocalFileWriteable> fileBase;
 	private LoadLimit downloadLimit;
 	
-	public Writer(FileBase<LocalFileWritable> fileBase, LoadLimit downloadLimit) {
-		this.fileBase = fileBase;
-		this.downloadLimit = downloadLimit;
+	public FileBase<LocalFileWriteable> getFileBase() {
+		return fileBase;
 	}
-	
+
+	public void setFileBase(FileBase<LocalFileWriteable> fileBase) {
+		this.fileBase = fileBase;
+	}
+
 	public LoadLimit getDownloadLimit() {
 		return downloadLimit;
 	}
@@ -21,7 +24,7 @@ public class Writer {
 
 	public void process(DataAnswer dataAnswer) throws IOException {
 		for (DataFileAnswer dataFileAnswer : dataAnswer) {
-			LocalFileWritable file = fileBase.getFile(dataFileAnswer.getFileId());
+			LocalFileWriteable file = fileBase.getFile(dataFileAnswer.getFileId());
 			file.write(dataFileAnswer.getDataBlock());
 		}
 	}
@@ -30,7 +33,7 @@ public class Writer {
 		Priority totalPriority = totalPriotity();
 		DataRequest dataRequest = new DataRequest();
 		
-		for (LocalFileWritable file : fileBase) {
+		for (LocalFileWriteable file : fileBase) {
 			if (!file.isCompleted()) {
 				float percent = file.getPriority().percent(totalPriority);
 				int maxAllowed = (int) percent * downloadLimit.getLimint();
@@ -46,7 +49,7 @@ public class Writer {
 	private Priority totalPriotity() {
 		int totalPriority = 0;
 		
-		for (LocalFileWritable localFileWritable : fileBase) {
+		for (LocalFileWriteable localFileWritable : fileBase) {
 			totalPriority += localFileWritable.getPriority().get();
 		}
 		

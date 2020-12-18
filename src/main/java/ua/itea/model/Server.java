@@ -10,7 +10,10 @@ public class Server implements Runnable {
 	public Server(int port, ChannelProvider channelProvider) {
 		this.port = port;
 		this.channelProvider = channelProvider;
-		new Thread(this).start();
+		
+		Thread thread = new Thread(this);
+		thread.setDaemon(true);
+		thread.start();
 	}
 
 	@Override
@@ -18,12 +21,12 @@ public class Server implements Runnable {
 		try (ServerSocket server = new ServerSocket(port)) {
 			
 			while(true) {
-				channelProvider.create(server.accept());
+				System.out.println("server waits");
+				channelProvider.establish(server.accept());
 			}
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
+	}	
 }
