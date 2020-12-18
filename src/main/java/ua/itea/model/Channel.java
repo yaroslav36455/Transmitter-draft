@@ -1,12 +1,9 @@
 package ua.itea.model;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.Socket;
-import java.util.concurrent.TimeUnit;
 
 public class Channel implements Runnable, AutoCloseable {
 	private LocalFileBase localFileBase;
@@ -40,7 +37,7 @@ public class Channel implements Runnable, AutoCloseable {
 	
 	public void setLocalFileBase(LocalFileBase localFileBase) {
 		this.localFileBase = localFileBase;
-		writer.setFileBase(localFileBase.getWritableBase());
+		writer.setFileBase(localFileBase.getWriteableBase());
 		reader.setFileBase(localFileBase.getReadableBase());
 	}
 
@@ -91,30 +88,37 @@ public class Channel implements Runnable, AutoCloseable {
 //			}
 			
 			while (true) {
-				if (server) {
-					System.out.println("server");
-				} else {
-					System.out.println("client");
-				}
-
 				Message message = (Message) ois.readObject();
 				
-				DataRequest dataRequest = message.getDataRequest();
-				DataAnswer dataAnswer = message.getDataAnswer();
+				DataRequest remoteRequest = message.getDataRequest();
+				DataAnswer remoteAnswer = message.getDataAnswer();
 				
-				DataAnswer answer = reader.process(dataRequest);
-				DataRequest request = null;
+				DataAnswer thisAnswer = null;
+				DataRequest thisRequest = null;
+				
+				if (remoteRequest != null) {
+					thisAnswer = reader.process(remoteRequest);
+				}
 
-				if (dataAnswer != null) {
-					writer.process(dataAnswer);	
+				if (remoteAnswer != null) {
+					writer.process(remoteAnswer);	
 				}
 				
-				request = writer.createRequest();
+				thisRequest = writer.createRequest();
 				
 				// send message
 //				message = new Message();
-				message.setDataAnswer(answer);
-				message.setDataRequest(request);
+				message.setDataAnswer(thisAnswer);
+				message.setDataRequest(thisRequest);
+				
+				if (remoteRequest == null && thisRequest == null) {
+					try {
+						System.out.println("wait");
+						wait();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
 				oos.writeObject(message);
 			}
 		} catch (IOException | ClassNotFoundException e) {

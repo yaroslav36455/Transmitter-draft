@@ -3,22 +3,21 @@ package ua.itea.gui;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ProgressBar;
 
 public class GUILocalFileRow implements Initializable {
-	@FXML private String fileName;
-	@FXML private String filePath;
-	
+	private String fileName;
+	private String filePath;
+
 	private long timeElapsed;
 	private long timeLeft;
-	
-	@FXML private String fileSize;
-	@FXML private String totalFileSize;
-	
-	@FXML private ProgressBar progressBar;
-	
+
+	private String fileSize;
+	private String totalFileSize;
+
+	private ProgressBar progressBar;
+
 	public GUILocalFileRow() {
 		/* empty */
 	}
@@ -32,8 +31,6 @@ public class GUILocalFileRow implements Initializable {
 		this.totalFileSize = totalFileSize;
 		this.progressBar = progressBar;
 	}
-	
-	
 
 	public String getFileName() {
 		return fileName;
@@ -78,6 +75,6 @@ public class GUILocalFileRow implements Initializable {
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

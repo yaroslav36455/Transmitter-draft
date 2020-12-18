@@ -16,7 +16,7 @@ public class GUIConnectionDialogSimpleCachedFactory implements GUIConnectionDial
 			CREATE_CONNECTION_DIALOG = new GUIConnectionDialogSimple();
 			
 			ClassLoader classLoader = GUIApplicationImpl.class.getClassLoader();
-			URL url = classLoader.getResource("create-connection.fxml");
+			URL url = classLoader.getResource("channel-config.fxml");
 			FXMLLoader loader = new FXMLLoader(url);
 			
 			loader.setController(CREATE_CONNECTION_DIALOG);

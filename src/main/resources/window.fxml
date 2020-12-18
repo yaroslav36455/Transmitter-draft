@@ -20,6 +20,9 @@
 				<SeparatorMenuItem />
 				<MenuItem text="Exit" fx:id="exit" />
 			</Menu>
+			<Menu text="Channels">
+				<MenuItem text="New..." fx:id="newChannel"/>
+			</Menu>
 			<Menu text="Servers">
 				<MenuItem text="Start" fx:id="startServer" />
 			</Menu>

@@ -15,3 +15,12 @@
 .button {
 	-fx-halignment: right;
 }
+
+.colon {
+	-fx-alignment: center;
+	-fx-font-size: 140%;
+}
+
+.port {
+	-fx-max-width: 70;
+}

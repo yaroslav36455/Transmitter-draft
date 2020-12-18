@@ -17,10 +17,11 @@ public class ServerChannelFactory implements ChannelFactory {
 		try {
 			readable.add(new LocalFileReadable(new File(filePath)));
 		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		localFileBase.setWritableBase(writable);
+		localFileBase.setWriteableBase(writable);
 		localFileBase.setReadableBase(readable);
 		channel.setLocalFileBase(localFileBase);
 		

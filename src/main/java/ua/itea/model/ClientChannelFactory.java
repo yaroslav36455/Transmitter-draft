@@ -23,7 +23,7 @@ public class ClientChannelFactory implements ChannelFactory {
 			e.printStackTrace();
 		}
 		
-		localFileBase.setWritableBase(writable);
+		localFileBase.setWriteableBase(writable);
 		localFileBase.setReadableBase(readable);
 		channel.setLocalFileBase(localFileBase);
 		

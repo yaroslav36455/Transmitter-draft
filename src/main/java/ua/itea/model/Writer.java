@@ -31,7 +31,7 @@ public class Writer {
 	
 	public DataRequest createRequest() throws IOException {
 		Priority totalPriority = totalPriotity();
-		DataRequest dataRequest = new DataRequest();
+		DataRequest dataRequest = null;
 		
 		for (LocalFileWriteable file : fileBase) {
 			if (!file.isCompleted()) {
@@ -39,6 +39,9 @@ public class Writer {
 				int maxAllowed = (int) percent * downloadLimit.getLimint();
 				DataBlockInfo dataBlockInfo = file.createRequest(maxAllowed);
 				
+				if (dataRequest == null) {
+					dataRequest = new DataRequest();
+				}
 				dataRequest.add(new DataFileRequest(file.getFileId(), dataBlockInfo));
 			}
 		}

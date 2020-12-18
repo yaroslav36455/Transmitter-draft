@@ -35,6 +35,7 @@ public class LocalFileReadable extends LocalFile {
 
 	@Override
 	public FileSize getFileSize() throws IOException {
-		return new FileSize(raf.getFilePointer(), raf.length());
+//		return new FileSize(raf.getFilePointer(), raf.length());
+		return new FileSize(raf.length(), raf.length());
 	}
 }
