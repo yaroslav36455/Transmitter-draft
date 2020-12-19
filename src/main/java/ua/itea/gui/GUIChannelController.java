@@ -3,22 +3,19 @@ package ua.itea.gui;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-import javafx.css.converter.StringConverter;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SelectionMode;
@@ -26,10 +23,12 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 import javafx.stage.Window;
+import ua.itea.db.Connector;
+import ua.itea.db.ConnectorImpl;
 import ua.itea.db.Contact;
+import ua.itea.db.ContactDatabase;
 import ua.itea.gui.factory.GUIConnectionInfoFactory;
 import ua.itea.gui.factory.GUIConnectionInfoImplFactory;
 import ua.itea.model.Channel;
@@ -71,11 +70,11 @@ public class GUIChannelController implements Initializable {
 
 		channel = new Channel();
 		channel.setLocalFileBase(localFileBase);
-		
+
 		GUIConnectionInfoFactory gcif = new GUIConnectionInfoImplFactory();
 		connectionInfo = gcif.create();
 	}
-	
+
 	public Text getName() {
 		return connectionInfo.getController().getName();
 	}
@@ -105,8 +104,7 @@ public class GUIChannelController implements Initializable {
 						double progress = fs.getFilledSize().getSize() / (double) fs.getTotalSize().getSize();
 						ProgressBar progressBar = new ProgressBar(progress);
 
-						GUILocalFileRow lfr = new GUILocalFileRow(fileName, filePath, fs,
-								progressBar);
+						GUILocalFileRow lfr = new GUILocalFileRow(fileName, filePath, fs, progressBar);
 						localComputer.getItems().add(lfr);
 					}
 				}
@@ -119,22 +117,32 @@ public class GUIChannelController implements Initializable {
 			localComputer.getItems().removeAll(localComputer.getSelectionModel().getSelectedItems());
 		});
 		
-		connectButton.setOnAction(event->{
-			connectionInfo.getController().getAddress().setText(addressTextField.getText());
-			connectionInfo.getController().getPort().setText(portTextField.getText());
+		connectButton.setOnAction(event -> {
+//			connectionInfo.getController().getAddress().setText(addressTextField.getText());
+//			connectionInfo.getController().getPort().setText(portTextField.getText());
+//
+//			Alert alert = new Alert(AlertType.NONE, null, ButtonType.CANCEL);
+//
+//			alert.getDialogPane().setContent(connectionInfo.getNode());
+//			alert.setHeaderText("Connection...");
+//			alert.setTitle("Connection");
+//			alert.setGraphic(new ProgressIndicator());
+//			alert.showAndWait();
 			
-			Alert alert = new Alert(AlertType.NONE, null, ButtonType.CANCEL);
-			
-			alert.getDialogPane().setContent(connectionInfo.getNode());
-			alert.setHeaderText("Connection...");
-			alert.setTitle("Connection");
-			alert.setGraphic(new ProgressIndicator());
-			alert.showAndWait();
+			try {
+				Connector connector = new ConnectorImpl();
+				ContactDatabase contactDatabase = new ContactDatabase(connector.getConnection());
+				
+				contactDatabase.insert(connector.getConnection(),
+									 new Contact("QWS ", "127.0.0.2", 999));
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		});
-		
+
 		FXMLLoader loader = new FXMLLoader();
 		GUIContactDatabaseDialog dialog = new GUIContactDatabaseDialog();
-		
+
 		loader.setController(dialog);
 		loader.setLocation(this.getClass().getClassLoader().getResource("contact-database.fxml"));
 		try {
@@ -142,10 +150,10 @@ public class GUIChannelController implements Initializable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		selectButton.setOnAction(event->{
+
+		selectButton.setOnAction(event -> {
 			Optional<Contact> result = dialog.showAndWait();
-			
+
 			if (result.isPresent()) {
 				Contact contact = result.get();
 				addressTextField.setText(contact.getAddress());

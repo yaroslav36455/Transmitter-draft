@@ -34,11 +34,4 @@ public class Contact {
 	public void setPort(int port) {
 		this.port = port;
 	}
-
-	@Override
-	public String toString() {
-		return "Contact [name=" + name + ", address=" + address + ", port=" + port + "]";
-	}
-	
-	
 }
