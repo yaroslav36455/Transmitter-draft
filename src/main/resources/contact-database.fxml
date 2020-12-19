@@ -1,34 +1,31 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.cell.PropertyValueFactory?>
 
-<VBox xmlns:fx="http://javafx.com/fxml" stylesheets="app.css">
-	<TableView fx:id="contacts">
-		<columns>
-			<TableColumn text="Name">
-				<cellValueFactory>
-					<PropertyValueFactory property="name" />
-				</cellValueFactory>
-			</TableColumn>
-			<TableColumn text="Address">
-				<cellValueFactory>
-					<PropertyValueFactory property="address" />
-				</cellValueFactory>
-			</TableColumn>
-			<TableColumn text="Port">
-				<cellValueFactory>
-					<PropertyValueFactory property="port" />
-				</cellValueFactory>
-			</TableColumn>
-		</columns>
-	</TableView>
-	<HBox>
-		<Button text="Select" fx:id="selectButton"/>
-		<Button text="Cancel" fx:id="cancelButton"/>
-	</HBox>
-</VBox>
+<BorderPane xmlns:fx="http://javafx.com/fxml" stylesheets="app.css">
+	<center>
+		<TableView fx:id="contacts">
+			<columns>
+				<TableColumn text="Name">
+					<cellValueFactory>
+						<PropertyValueFactory property="name" />
+					</cellValueFactory>
+				</TableColumn>
+				<TableColumn text="Address">
+					<cellValueFactory>
+						<PropertyValueFactory property="address" />
+					</cellValueFactory>
+				</TableColumn>
+				<TableColumn text="Port">
+					<cellValueFactory>
+						<PropertyValueFactory property="port" />
+					</cellValueFactory>
+				</TableColumn>
+			</columns>
+		</TableView>
+	</center>
+</BorderPane>

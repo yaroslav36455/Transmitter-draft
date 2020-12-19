@@ -2,8 +2,11 @@ package ua.itea.db;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ContactDatabase {
 	private static final String CREATE_TABLE
@@ -15,6 +18,7 @@ public class ContactDatabase {
 			+ " (`name`, `address`, `port`);";
 	private static final String INSERT = "INSERT OR IGNORE INTO `contacts` "
 			+ "(name, address, port) VALUES (?, ?, ?);";
+	private static final String READ_ALL = "SELECT * FROM `contacts`;";
 	
 	public ContactDatabase(Connection conn) throws SQLException {
 		Statement statement = conn.createStatement();
@@ -38,11 +42,27 @@ public class ContactDatabase {
 		conn.close();
 	}
 	
-	public Contact[] read(Connection conn) {
-		return null;
+	public List<Contact> read(Connection conn) throws SQLException {
+		List<Contact> contacts = new ArrayList<>();
+		Statement statement = conn.createStatement();
+		
+		ResultSet result = statement.executeQuery(READ_ALL);
+		
+		while(result.next()) {
+			Contact contact = new Contact(result.getString("name"),
+										  result.getString("address"),
+										  result.getInt("port"));
+			
+			contacts.add(contact);
+		}
+		
+		result.close();
+		statement.close();
+		conn.close();
+		return contacts;
 	}
 	
-	public void remove(Contact ...contact) {
+	public void remove(List<Contact> contacts) {
 		
 	}
 }

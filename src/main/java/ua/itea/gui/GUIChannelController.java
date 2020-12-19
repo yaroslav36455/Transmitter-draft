@@ -134,7 +134,7 @@ public class GUIChannelController implements Initializable {
 				ContactDatabase contactDatabase = new ContactDatabase(connector.getConnection());
 				
 				contactDatabase.insert(connector.getConnection(),
-									 new Contact("QWS ", "127.0.0.2", 999));
+									   new Contact("QWS", "127.0.0.2", 999));
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
