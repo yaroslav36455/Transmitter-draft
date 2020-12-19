@@ -6,17 +6,26 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import javafx.css.converter.StringConverter;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.text.Text;
 import javafx.stage.Window;
 import ua.itea.model.Channel;
 import ua.itea.model.FileBase;
@@ -46,14 +55,22 @@ public class GUIChannelController implements Initializable {
 	@FXML
 	private TableView<GUILocalFileRow> remoteComputer;
 	private Channel channel;
+	private GUIConnectionInfo connectionInfo;
 
-	public GUIChannelController() {
+	public GUIChannelController() throws IOException {
 		LocalFileBase localFileBase = new LocalFileBase();
 
 		localFileBase.setReadableBase(new FileBase<>());
 
 		channel = new Channel();
 		channel.setLocalFileBase(localFileBase);
+		
+		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
+		connectionInfo = gcif.create();
+	}
+	
+	public Text getName() {
+		return connectionInfo.getController().getName();
 	}
 
 	@Override
@@ -78,11 +95,10 @@ public class GUIChannelController implements Initializable {
 
 						String fileName = file.getName();
 						String filePath = file.getPath();
-						String fileSize = String.valueOf(fs.getFilledSize());
-						String totalFileSize = String.valueOf(fs.getTotalSize());
-						ProgressBar progressBar = new ProgressBar(fs.getFilledSize() / (double) fs.getTotalSize());
+						double progress = fs.getFilledSize().getSize() / (double) fs.getTotalSize().getSize();
+						ProgressBar progressBar = new ProgressBar(progress);
 
-						GUILocalFileRow lfr = new GUILocalFileRow(fileName, filePath, fileSize, totalFileSize,
+						GUILocalFileRow lfr = new GUILocalFileRow(fileName, filePath, fs,
 								progressBar);
 						localComputer.getItems().add(lfr);
 					}
@@ -94,6 +110,19 @@ public class GUIChannelController implements Initializable {
 
 		removeFiles.setOnAction(event -> {
 			localComputer.getItems().removeAll(localComputer.getSelectionModel().getSelectedItems());
+		});
+		
+		connectButton.setOnAction(event->{
+			connectionInfo.getController().getAddress().setText(addressTextField.getText());
+			connectionInfo.getController().getPort().setText(portTextField.getText());
+			
+			Alert alert = new Alert(AlertType.NONE, null, ButtonType.CANCEL);
+			
+			alert.getDialogPane().setContent(connectionInfo.getNode());
+			alert.setHeaderText("Connection...");
+			alert.setTitle("Connection");
+			alert.setGraphic(new ProgressIndicator());
+			alert.showAndWait();
 		});
 	}
 }

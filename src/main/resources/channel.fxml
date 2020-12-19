@@ -48,7 +48,7 @@
 							</TableColumn>
 							<TableColumn text="Size" styleClass="right-to-left">
 								<cellValueFactory>
-									<PropertyValueFactory property="fileSize" />
+									<PropertyValueFactory property="filledSize" />
 								</cellValueFactory>
 							</TableColumn>
 							<TableColumn text="Total" styleClass="right-to-left">

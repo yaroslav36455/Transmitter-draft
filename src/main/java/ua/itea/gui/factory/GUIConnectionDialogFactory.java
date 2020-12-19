@@ -2,9 +2,8 @@ package ua.itea.gui.factory;
 
 import java.io.IOException;
 
-import javafx.scene.control.Dialog;
-import ua.itea.gui.GUIConnectionInfo;
+import javafx.scene.control.Alert;
 
 public interface GUIConnectionDialogFactory {
-	public Dialog<GUIConnectionInfo> create() throws IOException;
+	public Alert create() throws IOException;
 }

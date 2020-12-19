@@ -4,19 +4,24 @@ import java.io.Serializable;
 
 public class FileSize implements Serializable {
 	private static final long serialVersionUID = -7187973843919065688L;
-	private final long size;
-	private final long totalSize;
+	private MemorySize filledSize;
+	private MemorySize totalSize;
 	
-	public FileSize(long size, long totalSize) {
-		this.size = size;
+	public FileSize(long filledSize, long totalSize) {
+		this.filledSize = new MemorySize(filledSize);
+		this.totalSize = new MemorySize(totalSize);
+	}
+	
+	public FileSize(MemorySize filledSize, MemorySize totalSize) {
+		this.filledSize = filledSize;
 		this.totalSize = totalSize;
 	}
 
-	public long getFilledSize() {
-		return size;
+	public MemorySize getFilledSize() {
+		return filledSize;
 	}
 	
-	public long getTotalSize() {
+	public MemorySize getTotalSize() {
 		return totalSize;
 	}
 }

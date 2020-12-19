@@ -5,30 +5,25 @@ import java.util.ResourceBundle;
 
 import javafx.fxml.Initializable;
 import javafx.scene.control.ProgressBar;
+import ua.itea.model.FileSize;
+import ua.itea.model.MemorySize;
 
-public class GUILocalFileRow implements Initializable {
+public class GUILocalFileRow {
 	private String fileName;
 	private String filePath;
 
 	private long timeElapsed;
 	private long timeLeft;
 
-	private String fileSize;
-	private String totalFileSize;
+	private FileSize fileSize;
 
 	private ProgressBar progressBar;
 
-	public GUILocalFileRow() {
-		/* empty */
-	}
-
 	public GUILocalFileRow(String fileName, String filePath,
-						String fileSize, String totalFileSize,
-			ProgressBar progressBar) {
+						   FileSize fileSize, ProgressBar progressBar) {
 		this.fileName = fileName;
 		this.filePath = filePath;
 		this.fileSize = fileSize;
-		this.totalFileSize = totalFileSize;
 		this.progressBar = progressBar;
 	}
 
@@ -36,45 +31,19 @@ public class GUILocalFileRow implements Initializable {
 		return fileName;
 	}
 
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
-	}
-
 	public String getFilePath() {
 		return filePath;
 	}
 
-	public void setFilePath(String filePath) {
-		this.filePath = filePath;
+	public MemorySize getFilledSize() {
+		return fileSize.getFilledSize();
 	}
 
-	public String getFileSize() {
-		return fileSize;
-	}
-
-	public void setFileSize(String fileSize) {
-		this.fileSize = fileSize;
-	}
-
-	public String getTotalFileSize() {
-		return totalFileSize;
-	}
-
-	public void setTotalFileSize(String totalFileSize) {
-		this.totalFileSize = totalFileSize;
+	public MemorySize getTotalFileSize() {
+		return fileSize.getTotalSize();
 	}
 
 	public ProgressBar getProgressBar() {
 		return progressBar;
-	}
-
-	public void setProgressBar(ProgressBar progressBar) {
-		this.progressBar = progressBar;
-	}
-
-	@Override
-	public void initialize(URL location, ResourceBundle resources) {
-		// TODO Auto-generated method stub
-
 	}
 }

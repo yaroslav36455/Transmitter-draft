@@ -2,20 +2,19 @@
 
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.text.Text?>
-<?import javafx.scene.control.Button?>
 
 <GridPane xmlns:fx="http://javafx.com/fxml"
 	stylesheets="app.css">
-	<Text GridPane.columnIndex="0" GridPane.rowIndex="0"
-		text="Address:" GridPane.halignment="RIGHT" />
+	<Text GridPane.columnIndex="0" GridPane.rowIndex="0" text="Name:"
+		GridPane.halignment="RIGHT" />
 	<Text GridPane.columnIndex="0" GridPane.rowIndex="1"
-		text="Port:" GridPane.halignment="RIGHT" />
-	<Text GridPane.columnIndex="0" GridPane.rowIndex="2" text="Name:"
+		text="Address:" GridPane.halignment="RIGHT" />
+	<Text GridPane.columnIndex="0" GridPane.rowIndex="2" text="Port:"
 		GridPane.halignment="RIGHT" />
 	<Text GridPane.columnIndex="1" GridPane.rowIndex="0"
-		fx:id="addressText" />
+		fx:id="name"/>
 	<Text GridPane.columnIndex="1" GridPane.rowIndex="1"
-		fx:id="portText" />
+		fx:id="address"/>
 	<Text GridPane.columnIndex="1" GridPane.rowIndex="2"
-		fx:id="nameText" />
+		fx:id="port"/>
 </GridPane>

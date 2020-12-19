@@ -1,32 +1,21 @@
 package ua.itea.gui;
 
-public class GUIConnectionInfo {
-	private String address;
-	private String port;
-	private String name;
-	
-	public GUIConnectionInfo(String address, String port, String name) {
-		this.address = address;
-		this.port = port;
-		setNameImpl(name);
-	}
+import javafx.scene.Node;
 
-	public String getAddress() {
-		return address;
+public class GUIConnectionInfo {
+	private Node node;
+	private GUIConnectionInfoController controller;
+	
+	public GUIConnectionInfo(Node node, GUIConnectionInfoController controller) {
+		this.node = node;
+		this.controller = controller;
 	}
 	
-	public String getPort() {
-		return port;
+	public Node getNode() {
+		return node;
 	}
 	
-	public String getName() {
-		return name;
-	}
-	public void setName(String name) {
-		setNameImpl(name);
-	}
-	
-	private void setNameImpl(String name) {
-		this.name = name != null && !name.isEmpty() ? name : address;
+	public GUIConnectionInfoController getController() {
+		return controller;
 	}
 }

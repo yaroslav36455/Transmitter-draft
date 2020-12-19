@@ -9,15 +9,16 @@ import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import ua.itea.gui.factory.GUIConnectionDialogFactory;
-import ua.itea.gui.factory.GUIConnectionDialogSimpleCachedFactory;
 import ua.itea.gui.factory.GUIChannel;
 import ua.itea.gui.factory.GUIChannelFactory;
 import ua.itea.gui.factory.GUIChannelVBoxFactory;
@@ -44,7 +45,6 @@ public class GUIApplicationImpl extends Application implements Initializable {
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		GUIChannelFactory paneFacotry = new GUIChannelVBoxFactory();
-		GUIConnectionDialogFactory dialogFactory = new GUIConnectionDialogSimpleCachedFactory();
 		
 		ChannelBase channelBase = new ChannelBase();
 		
@@ -74,9 +74,15 @@ public class GUIApplicationImpl extends Application implements Initializable {
 			
 			try {
 				GUIChannel gui = paneFacotry.create();
+				GUIChannelController gcc = gui.getController();
+				Node node = gui.getNode();
+				
 				Tab tab = new Tab();
+				Text text = gui.getController().getName();
+				
+				tab.textProperty().bindBidirectional(text.textProperty());
 				tab.setText("Channel G");
-				tab.setContent(gui.getNode());
+				tab.setContent(node);
 				tabPane.getTabs().add(tab);
 			} catch (IOException e1) {
 				e1.printStackTrace();
