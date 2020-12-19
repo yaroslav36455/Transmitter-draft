@@ -11,15 +11,19 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import ua.itea.gui.factory.GUIConnectionDialogFactory;
-import ua.itea.gui.factory.GUIChannel;
 import ua.itea.gui.factory.GUIChannelFactory;
 import ua.itea.gui.factory.GUIChannelVBoxFactory;
 import ua.itea.model.ChannelBase;
@@ -45,45 +49,22 @@ public class GUIApplicationImpl extends Application implements Initializable {
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		GUIChannelFactory paneFacotry = new GUIChannelVBoxFactory();
-		
 		ChannelBase channelBase = new ChannelBase();
 		
 		newChannel.setOnAction(event->{
-//			try {
-//			Optional<GUIConnectionInfo> opt = dialogFactory.create().showAndWait();
-//
-//			if (opt.isPresent()) {
-//				GUIConnectionInfo conn = opt.get();
-//				
-//				System.out.println("Address: " + conn.getAddress());
-//				System.out.println("Port: " + conn.getPort());
-//				System.out.println("Name: " + conn.getName());
-////				System.out.println(conn.getClass());
-//				
-//				GUIChannel gui = paneFacotry.create();
-//				Tab tab = new Tab();
-//				tab.setText(conn.getName());
-//				tab.setContent(gui.getNode());
-//				tabPane.getTabs().add(tab);
-//			}
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-			
-			
 			try {
 				GUIChannel gui = paneFacotry.create();
 				GUIChannelController gcc = gui.getController();
 				Node node = gui.getNode();
 				
 				Tab tab = new Tab();
-				Text text = gui.getController().getName();
+				Text channelName = gui.getController().getName();
 				
-				tab.textProperty().bindBidirectional(text.textProperty());
-				tab.setText("Channel G");
+				tab.textProperty().bindBidirectional(channelName.textProperty());
+				tab.setText("Channel");
 				tab.setContent(node);
 				tabPane.getTabs().add(tab);
+				tabPane.getSelectionModel().selectLast();
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}

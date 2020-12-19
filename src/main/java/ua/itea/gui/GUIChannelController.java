@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javafx.css.converter.StringConverter;
@@ -16,6 +17,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
@@ -27,6 +29,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 import javafx.stage.Window;
+import ua.itea.db.Contact;
+import ua.itea.gui.factory.GUIConnectionInfoFactory;
+import ua.itea.gui.factory.GUIConnectionInfoImplFactory;
 import ua.itea.model.Channel;
 import ua.itea.model.FileBase;
 import ua.itea.model.FileSize;
@@ -41,6 +46,8 @@ public class GUIChannelController implements Initializable {
 	@FXML
 	private Button connectButton;
 	@FXML
+	private Button selectButton;
+	@FXML
 	private Button addFiles;
 	@FXML
 	private Button removeFiles;
@@ -53,7 +60,7 @@ public class GUIChannelController implements Initializable {
 	@FXML
 	private TableView<GUILocalFileRow> localComputer;
 	@FXML
-	private TableView<GUILocalFileRow> remoteComputer;
+	private TableView<GUIRemoteFileRow> remoteComputer;
 	private Channel channel;
 	private GUIConnectionInfo connectionInfo;
 
@@ -65,7 +72,7 @@ public class GUIChannelController implements Initializable {
 		channel = new Channel();
 		channel.setLocalFileBase(localFileBase);
 		
-		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
+		GUIConnectionInfoFactory gcif = new GUIConnectionInfoImplFactory();
 		connectionInfo = gcif.create();
 	}
 	
@@ -123,6 +130,27 @@ public class GUIChannelController implements Initializable {
 			alert.setTitle("Connection");
 			alert.setGraphic(new ProgressIndicator());
 			alert.showAndWait();
+		});
+		
+		FXMLLoader loader = new FXMLLoader();
+		GUIContactDatabaseDialog dialog = new GUIContactDatabaseDialog();
+		
+		loader.setController(dialog);
+		loader.setLocation(this.getClass().getClassLoader().getResource("contact-database.fxml"));
+		try {
+			dialog.getDialogPane().setContent(loader.load());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		selectButton.setOnAction(event->{
+			Optional<Contact> result = dialog.showAndWait();
+			
+			if (result.isPresent()) {
+				Contact contact = result.get();
+				addressTextField.setText(contact.getAddress());
+				portTextField.setText(String.valueOf(contact.getPort()));
+			}
 		});
 	}
 }

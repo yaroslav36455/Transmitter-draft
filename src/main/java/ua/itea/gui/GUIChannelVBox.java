@@ -1,7 +1,6 @@
-package ua.itea.gui.factory;
+package ua.itea.gui;
 
 import javafx.scene.layout.VBox;
-import ua.itea.gui.GUIChannelController;
 
 public class GUIChannelVBox implements GUIChannel {
 	private VBox vBox;

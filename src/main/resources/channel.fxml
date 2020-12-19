@@ -20,8 +20,10 @@
 		<VBox styleClass="colon">
 			<Text>:</Text>
 		</VBox>
-		<TextField styleClass="port" promptText="port" fx:id="portTextField" />
+		<TextField styleClass="port" promptText="port"
+			fx:id="portTextField" />
 		<Button text="Connect" fx:id="connectButton" />
+		<Button text="Select..." fx:id="selectButton" />
 	</HBox>
 	<SplitPane fx:id="splitPane" VBox.vgrow="ALWAYS">
 		<items>
@@ -48,7 +50,8 @@
 							</TableColumn>
 							<TableColumn text="Size" styleClass="right-to-left">
 								<cellValueFactory>
-									<PropertyValueFactory property="filledSize" />
+									<PropertyValueFactory
+										property="filledSize" />
 								</cellValueFactory>
 							</TableColumn>
 							<TableColumn text="Total" styleClass="right-to-left">
@@ -63,6 +66,11 @@
 										property="progressBar" />
 								</cellValueFactory>
 							</TableColumn>
+							<TableColumn text="Priority">
+								<cellValueFactory>
+									<PropertyValueFactory property="priority" />
+								</cellValueFactory>
+							</TableColumn>
 						</columns>
 					</TableView>
 				</center>
@@ -74,6 +82,13 @@
 				<center>
 					<TableView fx:id="remoteComputer"
 						TableMenuButtonVisible="true">
+						<columns>
+							<TableColumn text="Name">
+								<cellValueFactory>
+									<PropertyValueFactory property="fileName" />
+								</cellValueFactory>
+							</TableColumn>
+						</columns>
 					</TableView>
 				</center>
 				<bottom>

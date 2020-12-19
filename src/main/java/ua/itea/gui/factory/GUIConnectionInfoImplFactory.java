@@ -1,10 +1,12 @@
-package ua.itea.gui;
+package ua.itea.gui.factory;
 
 import java.io.IOException;
 
 import javafx.fxml.FXMLLoader;
+import ua.itea.gui.GUIConnectionInfo;
+import ua.itea.gui.GUIConnectionInfoController;
 
-public class GUIConnectionInfoFactory {
+public class GUIConnectionInfoImplFactory implements GUIConnectionInfoFactory {
 	
 	public GUIConnectionInfo create() throws IOException {
 		GUIConnectionInfoController gcic = new GUIConnectionInfoController();

@@ -7,7 +7,9 @@ import javafx.geometry.Pos;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.VBox;
 import ua.itea.gui.GUIApplicationImpl;
+import ua.itea.gui.GUIChannel;
 import ua.itea.gui.GUIChannelController;
+import ua.itea.gui.GUIChannelVBox;
 
 public class GUIChannelVBoxFactory implements GUIChannelFactory {
 

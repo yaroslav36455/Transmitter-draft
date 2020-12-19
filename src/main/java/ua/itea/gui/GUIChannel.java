@@ -1,7 +1,6 @@
-package ua.itea.gui.factory;
+package ua.itea.gui;
 
 import javafx.scene.Node;
-import ua.itea.gui.GUIChannelController;
 
 public interface GUIChannel {
 	public Node getNode();
