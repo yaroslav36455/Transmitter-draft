@@ -7,36 +7,51 @@
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.RadioMenuItem?>
 <?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.control.SplitMenuButton?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.control.ProgressBar?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
 	stylesheets="app.css">
 	<top>
-		<MenuBar>
-			<Menu text="Main">
-				<RadioMenuItem text="Show logs" selected="false" />
-				<SeparatorMenuItem />
-				<MenuItem text="Exit" fx:id="exit" />
-			</Menu>
-			<Menu text="Channels">
-				<MenuItem text="New..." fx:id="newChannel"/>
-			</Menu>
-			<Menu text="Servers">
-				<MenuItem text="Start" fx:id="startServer" />
-			</Menu>
-			<Menu text="Connections">
-				<MenuItem text="New..." fx:id="newConnection" />
-				<MenuItem text="Prepare" />
-				<MenuItem text="Rename..." />
-				<SeparatorMenuItem />
-				<MenuItem text="Close Completed" />
-				<MenuItem text="Close All" />
-			</Menu>
-			<Menu text="Options">
-			</Menu>
-		</MenuBar>
+		<VBox>
+			<MenuBar>
+				<Menu text="Main">
+					<RadioMenuItem text="Show logs" selected="false" />
+					<SeparatorMenuItem />
+					<MenuItem text="Exit" fx:id="exit" />
+				</Menu>
+				<Menu text="Channels">
+					<MenuItem text="New..." fx:id="newChannel" />
+					<MenuItem text="List" />
+				</Menu>
+				<Menu text="Servers">
+					<MenuItem text="Start" fx:id="startServer" />
+				</Menu>
+				<Menu text="Connections">
+					<MenuItem text="New..." fx:id="newConnection" />
+					<MenuItem text="Prepare" />
+					<MenuItem text="Rename..." />
+					<SeparatorMenuItem />
+					<MenuItem text="Close Completed" />
+					<MenuItem text="Close All" />
+				</Menu>
+				<Menu text="Options">
+				</Menu>
+			</MenuBar>
+			<FlowPane styleClass="server-ports">
+				<Text styleClass="text">Server ports:</Text>
+				<SplitMenuButton text="3556" />
+				<SplitMenuButton text="24545" />
+				<SplitMenuButton text="24642" />
+				<SplitMenuButton text="54265" />
+				<Button text="Add..."></Button>
+			</FlowPane>
+		</VBox>
 	</top>
 	<center>
 		<TabPane fx:id="tabPane" TabDragPolicy="REORDER" />

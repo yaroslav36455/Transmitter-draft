@@ -88,6 +88,24 @@
 									<PropertyValueFactory property="fileName" />
 								</cellValueFactory>
 							</TableColumn>
+							<TableColumn text="Size" styleClass="right-to-left">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="filledSize" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn text="Total" styleClass="right-to-left">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="totalFileSize" />
+								</cellValueFactory>
+							</TableColumn>
+							<TableColumn text="Progress">
+								<cellValueFactory>
+									<PropertyValueFactory
+										property="progressBar" />
+								</cellValueFactory>
+							</TableColumn>
 						</columns>
 					</TableView>
 				</center>

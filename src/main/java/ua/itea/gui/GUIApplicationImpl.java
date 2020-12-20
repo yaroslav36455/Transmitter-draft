@@ -10,6 +10,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -20,6 +21,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -104,9 +106,9 @@ public class GUIApplicationImpl extends Application implements Initializable {
 		FXMLLoader loader = new FXMLLoader(GUIApplicationImpl.class.getClassLoader().getResource("window.fxml"), resources);
 		loader.setController(this);
 		
-		BorderPane borderPane = loader.load();
+		Parent root = loader.load();
 		
-		stage.setScene(new Scene(borderPane));
+		stage.setScene(new Scene(root));
 		stage.setMinWidth(800);
 		stage.setMinHeight(600);
 		stage.setMaximized(true);

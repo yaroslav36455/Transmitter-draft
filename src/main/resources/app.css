@@ -3,9 +3,9 @@
 	/* -fx-accent: green; */  /* running */
 	/* -fx-accent: orange; */ /* paused/waiting */
 	-fx-accent: red;    /* stopped/canceled/corrupted */
-	-fx-max-width: 20000;
+	-fx-max-width: 20000.0;
 	/* -fx-min-height: 30; */
-	-fx-indeterminate-bar-length: 300;
+	-fx-indeterminate-bar-length: 300.0;
 }
 
 .right-to-left {
@@ -18,9 +18,19 @@
 
 .colon {
 	-fx-alignment: center;
-	-fx-font-size: 140%;
+	-fx-font-size: 140.0%;
 }
 
 .port {
-	-fx-max-width: 70;
+	-fx-max-width: 70.0;
+}
+
+.server-ports {
+	-fx-padding: 0.0 0.0 0.0 5.0;
+	-fx-hgap: 5;
+}
+
+.server-ports > .text {
+	-fx-font-size: 115%;
+	-fx-font-weight: 600;
 }
