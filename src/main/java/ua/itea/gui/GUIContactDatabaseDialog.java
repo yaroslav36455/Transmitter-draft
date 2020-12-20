@@ -2,7 +2,6 @@ package ua.itea.gui;
 
 import java.net.URL;
 import java.sql.SQLException;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javafx.fxml.FXML;
@@ -10,6 +9,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.SelectionModel;
 import javafx.scene.control.TableView;
 import javafx.stage.Window;
 import javafx.util.Callback;
@@ -25,6 +25,7 @@ public class GUIContactDatabaseDialog extends Dialog<Contact>
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		Window window = getDialogPane().getScene().getWindow();
+		SelectionModel<Contact> selectionModel = contacts.getSelectionModel();
 		ButtonType select = new ButtonType("Select");
 		
 		setTitle("Contacts");
@@ -36,13 +37,9 @@ public class GUIContactDatabaseDialog extends Dialog<Contact>
 		Node selectNode = getDialogPane().lookupButton(select);
 		selectNode.setDisable(true);
 		
-		contacts.getSelectionModel().selectedIndexProperty().addListener(e->{
-			if (contacts.getSelectionModel().getSelectedIndex() == -1) {
-				selectNode.setDisable(true);
-			} else {
-				selectNode.setDisable(false);
-			}
-		});
+		selectionModel.selectedIndexProperty().addListener(e->
+			selectNode.setDisable(selectionModel.getSelectedIndex() == -1)
+		);
 		
 		setOnShowing(event->{
 			try {
@@ -64,7 +61,7 @@ public class GUIContactDatabaseDialog extends Dialog<Contact>
 				Contact result = null;
 				
 				if (param == select) {
-					result = contacts.getSelectionModel().getSelectedItem();
+					result = selectionModel.getSelectedItem();
 				}
 				
 				return result;

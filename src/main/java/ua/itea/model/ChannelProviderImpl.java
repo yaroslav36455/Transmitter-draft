@@ -1,7 +1,5 @@
 package ua.itea.model;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 
 public class ChannelProviderImpl implements ChannelProvider {
@@ -23,7 +21,7 @@ public class ChannelProviderImpl implements ChannelProvider {
 					&& !cs.getInetAddress().equals(socket.getInetAddress())) {
 				
 				channel.setSocket(socket);
-				channel.start(false);
+				channel.start();
 				return;
 			}
 		}

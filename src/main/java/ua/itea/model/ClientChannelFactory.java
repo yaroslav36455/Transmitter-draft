@@ -1,7 +1,6 @@
 package ua.itea.model;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -9,7 +8,7 @@ public class ClientChannelFactory implements ChannelFactory {
 
 	@Override
 	public Channel create(Socket socket) {
-		Channel channel = new Channel();
+		Channel channel = new ClientChannel();
 		LocalFileBase localFileBase = new LocalFileBase();
 		FileBase<LocalFileWriteable> writable = new FileBase<>();
 		FileBase<LocalFileReadable> readable = new FileBase<>();
@@ -28,7 +27,7 @@ public class ClientChannelFactory implements ChannelFactory {
 		channel.setLocalFileBase(localFileBase);
 		
 		channel.setSocket(socket);
-		channel.start(false);
+		channel.start();
 		
 		return channel;
 	}

@@ -44,7 +44,7 @@
 				</Menu>
 			</MenuBar>
 			<FlowPane styleClass="server-ports" fx:id="serverPane">
-				<Text styleClass="text">Server ports:</Text>
+				<Text styleClass="text">Servers:</Text>
 				<Button text="Add..." fx:id="addServer"></Button>
 			</FlowPane>
 		</VBox>

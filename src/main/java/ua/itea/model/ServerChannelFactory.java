@@ -8,7 +8,7 @@ public class ServerChannelFactory implements ChannelFactory {
 
 	@Override
 	public Channel create(Socket socket) {
-		Channel channel = new Channel();
+		Channel channel = new ServerChannel();
 		LocalFileBase localFileBase = new LocalFileBase();
 		FileBase<LocalFileWriteable> writable = new FileBase<>();
 		FileBase<LocalFileReadable> readable = new FileBase<>();
@@ -17,7 +17,6 @@ public class ServerChannelFactory implements ChannelFactory {
 		try {
 			readable.add(new LocalFileReadable(new File(filePath)));
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -26,7 +25,7 @@ public class ServerChannelFactory implements ChannelFactory {
 		channel.setLocalFileBase(localFileBase);
 		
 		channel.setSocket(socket);
-		channel.start(true);
+		channel.start();
 		
 		return channel;
 	}

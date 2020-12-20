@@ -20,13 +20,19 @@ public class Server implements Runnable {
 	private static final long KEY = 1;
 	private ServerSocket server;
 	private ChannelProvider channelProvider;
+	private int port;
 
 	public Server(ChannelProvider channelProvider) {
 		this.channelProvider = channelProvider;
 	}
 	
+	public int getPort() {
+		return port;
+	}
+
 	public void start(int port) throws IOException {
 		server = new ServerSocket(port);
+		this.port = port;
 		new Thread(this).start();
 	}
 	

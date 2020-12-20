@@ -3,8 +3,6 @@ package ua.itea.gui;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -19,17 +17,11 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SelectionMode;
-import javafx.scene.control.SplitMenuButton;
-import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 import javafx.stage.Window;
-import ua.itea.db.Connector;
-import ua.itea.db.ConnectorImpl;
 import ua.itea.db.Contact;
-import ua.itea.db.ContactDatabase;
 import ua.itea.gui.factory.GUIConnectionInfoFactory;
 import ua.itea.gui.factory.GUIConnectionInfoImplFactory;
 import ua.itea.model.Channel;
@@ -37,6 +29,7 @@ import ua.itea.model.FileBase;
 import ua.itea.model.FileSize;
 import ua.itea.model.LocalFileBase;
 import ua.itea.model.LocalFileReadable;
+import ua.itea.model.ServerChannel;
 
 public class GUIChannelController implements Initializable {
 	@FXML
@@ -52,12 +45,6 @@ public class GUIChannelController implements Initializable {
 	@FXML
 	private Button removeFiles;
 	@FXML
-	private SplitPane splitPane;
-	@FXML
-	private BorderPane leftBorderPane;
-	@FXML
-	private BorderPane rightBorderPane;
-	@FXML
 	private TableView<GUILocalFileRow> localComputer;
 	@FXML
 	private TableView<GUIRemoteFileRow> remoteComputer;
@@ -69,7 +56,7 @@ public class GUIChannelController implements Initializable {
 
 		localFileBase.setReadableBase(new FileBase<>());
 
-		channel = new Channel();
+		channel = new ServerChannel();
 		channel.setLocalFileBase(localFileBase);
 
 		GUIConnectionInfoFactory gcif = new GUIConnectionInfoImplFactory();
@@ -82,7 +69,6 @@ public class GUIChannelController implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		splitPane.setDividerPositions(0.5);
 
 		localComputer.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		remoteComputer.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
