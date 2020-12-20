@@ -19,6 +19,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -118,26 +119,16 @@ public class GUIChannelController implements Initializable {
 		});
 		
 		connectButton.setOnAction(event -> {
-//			connectionInfo.getController().getAddress().setText(addressTextField.getText());
-//			connectionInfo.getController().getPort().setText(portTextField.getText());
-//
-//			Alert alert = new Alert(AlertType.NONE, null, ButtonType.CANCEL);
-//
-//			alert.getDialogPane().setContent(connectionInfo.getNode());
-//			alert.setHeaderText("Connection...");
-//			alert.setTitle("Connection");
-//			alert.setGraphic(new ProgressIndicator());
-//			alert.showAndWait();
-			
-			try {
-				Connector connector = new ConnectorImpl();
-				ContactDatabase contactDatabase = new ContactDatabase(connector.getConnection());
-				
-				contactDatabase.insert(connector.getConnection(),
-									   new Contact("QWS", "127.0.0.2", 999));
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+			connectionInfo.getController().getAddress().setText(addressTextField.getText());
+			connectionInfo.getController().getPort().setText(portTextField.getText());
+
+			Alert alert = new Alert(AlertType.NONE, null, ButtonType.CANCEL);
+
+			alert.getDialogPane().setContent(connectionInfo.getNode());
+			alert.setHeaderText("Connection...");
+			alert.setTitle("Connection");
+			alert.setGraphic(new ProgressIndicator());
+			alert.showAndWait();
 		});
 
 		FXMLLoader loader = new FXMLLoader();

@@ -43,13 +43,9 @@
 				<Menu text="Options">
 				</Menu>
 			</MenuBar>
-			<FlowPane styleClass="server-ports">
+			<FlowPane styleClass="server-ports" fx:id="serverPane">
 				<Text styleClass="text">Server ports:</Text>
-				<SplitMenuButton text="3556" />
-				<SplitMenuButton text="24545" />
-				<SplitMenuButton text="24642" />
-				<SplitMenuButton text="54265" />
-				<Button text="Add..."></Button>
+				<Button text="Add..." fx:id="addServer"></Button>
 			</FlowPane>
 		</VBox>
 	</top>
