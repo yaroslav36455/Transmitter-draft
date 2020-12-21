@@ -1,7 +1,5 @@
 package ua.itea.model;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -15,9 +13,6 @@ public class LocalFileWriteable extends LocalFile {
 		raf = new RandomAccessFile(fileInfo.getFile(), "rw");
 		priority = fileInfo.getPriority();
 		raf.setLength(fileInfo.getTotalSize().getSize());
-		
-		System.out.println("pointer " + raf.getFilePointer());
-		System.out.println("length " + raf.length());
 	}
 
 	public void write(DataBlock dataBlock) throws IOException {

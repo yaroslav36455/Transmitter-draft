@@ -27,9 +27,9 @@ import ua.itea.gui.factory.GUIConnectionInfoImplFactory;
 import ua.itea.model.Channel;
 import ua.itea.model.FileBase;
 import ua.itea.model.FileSize;
-import ua.itea.model.LocalFileBase;
 import ua.itea.model.LocalFileReadable;
 import ua.itea.model.ServerChannel;
+import ua.itea.model.Uploader;
 
 public class GUIChannelController implements Initializable {
 	@FXML
@@ -52,12 +52,10 @@ public class GUIChannelController implements Initializable {
 	private GUIConnectionInfo connectionInfo;
 
 	public GUIChannelController() throws IOException {
-		LocalFileBase localFileBase = new LocalFileBase();
-
-		localFileBase.setReadableBase(new FileBase<>());
-
+		Uploader uploader = new Uploader();
+		uploader.setFiles(new FileBase<>());
 		channel = new ServerChannel();
-		channel.setLocalFileBase(localFileBase);
+		channel.setUploader(uploader);
 
 		GUIConnectionInfoFactory gcif = new GUIConnectionInfoImplFactory();
 		connectionInfo = gcif.create();
@@ -81,7 +79,7 @@ public class GUIChannelController implements Initializable {
 
 				if (files != null) {
 					for (File file : files) {
-						FileBase<LocalFileReadable> fileBase = channel.getLocalFileBase().getReadableBase();
+						FileBase<LocalFileReadable> fileBase = channel.getUploader().getFiles();
 						LocalFileReadable localFileReadable = new LocalFileReadable(file);
 						fileBase.add(localFileReadable);
 						FileSize fs = localFileReadable.getFileSize();

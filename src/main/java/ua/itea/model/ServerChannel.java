@@ -6,10 +6,11 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class ServerChannel extends Channel {
-	private Socket socket;
 	
 	@Override
-	public synchronized void run() {
+	public void run() {
+		Socket socket = getSocket();
+		
 		try (ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());) {
 			

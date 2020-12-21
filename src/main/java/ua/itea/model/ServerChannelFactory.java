@@ -5,11 +5,13 @@ import java.io.FileNotFoundException;
 import java.net.Socket;
 
 public class ServerChannelFactory implements ChannelFactory {
-
+	
 	@Override
 	public Channel create(Socket socket) {
 		Channel channel = new ServerChannel();
-		LocalFileBase localFileBase = new LocalFileBase();
+		Downloader downloader = new Downloader();
+		Uploader uploader = new Uploader();
+
 		FileBase<LocalFileWriteable> writable = new FileBase<>();
 		FileBase<LocalFileReadable> readable = new FileBase<>();
 		
@@ -20,9 +22,10 @@ public class ServerChannelFactory implements ChannelFactory {
 			e.printStackTrace();
 		}
 		
-		localFileBase.setWriteableBase(writable);
-		localFileBase.setReadableBase(readable);
-		channel.setLocalFileBase(localFileBase);
+		downloader.setFiles(writable);
+		uploader.setFiles(readable);
+		channel.setDownloader(downloader);
+		channel.setUploader(uploader);
 		
 		channel.setSocket(socket);
 		channel.start();

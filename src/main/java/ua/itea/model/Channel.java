@@ -5,22 +5,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-public abstract class Channel implements Runnable, AutoCloseable {
-	private LocalFileBase localFileBase;
-	private Reader reader;
-	private Writer writer;
+public abstract class Channel implements Runnable {
 	private Socket socket;
+	private Downloader downloader;
+	private Uploader uploader;
 
-	public Channel() {
-		this.reader = new Reader();
-		this.writer = new Writer();
-		this.writer.setDownloadLimit(new LoadLimit(50));
-	}
-	
-	public void start() {
-		new Thread(this).start();
-	}
-	
 	public Socket getSocket() {
 		return socket;
 	}
@@ -28,57 +17,78 @@ public abstract class Channel implements Runnable, AutoCloseable {
 	public void setSocket(Socket socket) {
 		this.socket = socket;
 	}
-
-	public LocalFileBase getLocalFileBase() {
-		return localFileBase;
-	}
 	
-	public void setLocalFileBase(LocalFileBase localFileBase) {
-		this.localFileBase = localFileBase;
-		writer.setFileBase(localFileBase.getWriteableBase());
-		reader.setFileBase(localFileBase.getReadableBase());
+	public Downloader getDownloader() {
+		return downloader;
 	}
 
-	@Override
-	public void close() throws IOException {
-		socket.close();
+	public void setDownloader(Downloader downloader) {
+		this.downloader = downloader;
 	}
-	
-	protected final void loop(ObjectInputStream ois, ObjectOutputStream oos)
-							  throws IOException, ClassNotFoundException {
-		while (true) {
-			Message message = (Message) ois.readObject();
-			
-			DataRequest remoteRequest = message.getDataRequest();
-			DataAnswer remoteAnswer = message.getDataAnswer();
-			
-			DataAnswer thisAnswer = null;
-			DataRequest thisRequest = null;
-			
-			if (remoteRequest != null) {
-				thisAnswer = reader.process(remoteRequest);
-			}
 
-			if (remoteAnswer != null) {
-				writer.process(remoteAnswer);	
-			}
-			
-			thisRequest = writer.createRequest();
-			
-			// send message
-//			message = new Message();
-			message.setDataAnswer(thisAnswer);
-			message.setDataRequest(thisRequest);
-			
-			if (remoteRequest == null && thisRequest == null) {
-				try {
-					System.out.println("wait");
-					wait();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+	public Uploader getUploader() {
+		return uploader;
+	}
+
+	public void setUploader(Uploader uploader) {
+		this.uploader = uploader;
+	}
+
+	public void start() {
+		new Thread(this).start();
+	}
+
+	protected final void loop(ObjectInputStream ois, ObjectOutputStream oos) 
+									throws ClassNotFoundException, IOException {
+		boolean run = true;
+
+		while (run) {
+			Mark mark = (Mark) ois.readObject();
+
+			switch (mark) {
+			case MESSAGE:
+				Message incomingMessage = (Message) ois.readObject();
+				Message outgoingMessage = createMessage(incomingMessage);
+				
+				if (outgoingMessage.isEmpty()) {
+					run = false;
+					oos.writeObject(Mark.STOP);
+				} else {
+					oos.writeObject(Mark.MESSAGE);
+					oos.writeObject(outgoingMessage);
 				}
+				break;
+
+			default:
+				run = false;
+				break;
 			}
-			oos.writeObject(message);
 		}
+	}
+	
+	public Message createMessage(Message incomingMessage) {
+		Request incomingRequest = incomingMessage.getRequest();
+		Answer incomingAnswer = incomingMessage.getAnswer();
+		Message outgoingMessag = new Message();
+		
+		DataRequest incomingDataRequest = incomingRequest.getData();
+		DataAnswer incomingDataAnswer = incomingAnswer.getData();
+		
+		DataAnswer outgoingDataAnswer = uploader.load(incomingDataRequest);
+		DataRequest outgoingDataRequest = downloader.load(incomingDataAnswer);
+		
+		if (outgoingDataAnswer != null) {
+			Answer answer = new Answer();
+			answer.setData(outgoingDataAnswer);
+			outgoingMessag.setAnswer(answer);
+		}
+		
+		if (outgoingDataRequest != null) {
+			Request request = new Request();
+			request.setData(outgoingDataRequest);
+			outgoingMessag.setRequest(request);
+		}
+		
+		return outgoingMessag;
 	}
 }

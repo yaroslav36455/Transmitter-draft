@@ -1,23 +1,15 @@
 package ua.itea.model;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
-import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.concurrent.ExecutorService;
 
-import javafx.util.Callback;
-
-public class Server implements Runnable {
-	private static final long KEY = 1;
+public class Server implements Runnable, AutoCloseable {
+	private static final long KEY = (long) (Math.random() * Long.MAX_VALUE);
 	private ServerSocket server;
 	private ChannelProvider channelProvider;
 	private int port;
@@ -25,7 +17,7 @@ public class Server implements Runnable {
 	public Server(ChannelProvider channelProvider) {
 		this.channelProvider = channelProvider;
 	}
-	
+
 	public int getPort() {
 		return port;
 	}
@@ -35,16 +27,17 @@ public class Server implements Runnable {
 		this.port = port;
 		new Thread(this).start();
 	}
-	
-	public void stop() {	
-		try (Socket socket = new Socket(InetAddress.getByAddress(new byte[] {127, 0, 0, 1}),
-										server.getLocalPort());
-			 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());) {
-			
-			oos.writeObject(Command.STOP);
+
+	@Override
+	public void close() {
+		try (Socket socket = new Socket(InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }),
+									    server.getLocalPort());
+				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());) {
+
+			oos.writeObject(Mark.STOP);
 			oos.writeLong(KEY);
 
-		} catch (IOException e) {	
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
@@ -52,27 +45,26 @@ public class Server implements Runnable {
 	@Override
 	public void run() {
 		boolean run = true;
-		
+
 		try {
-			
-			while(run) {
-				System.out.println("server " + server.getLocalPort() + " waits");
-				
+
+			while (run) {
 				Socket socket = server.accept();
 				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-				
-				switch (read(ois)) {
+
+				switch (readBegin(ois)) {
 				case START:
-					channelProvider.establish(socket);	
+					channelProvider.establish(socket);
 					break;
-					
+
 				case STOP:
-					System.out.println("server " + server.getLocalPort() + " stop");
 					run = false;
-					break;
+					/* no break */
 					
 				case IGNORE:
-					System.out.println("bad command");
+				default:
+					ois.close();
+					socket.close();
 					break;
 				}
 			}
@@ -86,32 +78,25 @@ public class Server implements Runnable {
 				e.printStackTrace();
 			}
 		}
-		
-		System.out.println("run end");
 	}
-	
-	private Command read(ObjectInputStream ois) {
-		Command result = Command.IGNORE;
-		
+
+	private Mark readBegin(ObjectInputStream ois) {
+		Mark result = Mark.IGNORE;
+
 		try {
-			Command command = (Command) ois.readObject();
+			Mark command = (Mark) ois.readObject();
 			long key = ois.readLong();
-			
-			if (command == Command.STOP
-					&& key == KEY) {
-				result = Command.STOP;
+
+			if (command == Mark.STOP && key == KEY) {
+				result = Mark.STOP;
 			} else {
 				result = command;
 			}
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return result;
-	}
-	
-	private static enum Command implements Serializable {
-		START, STOP, IGNORE
 	}
 }

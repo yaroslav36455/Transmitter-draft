@@ -3,12 +3,12 @@ package ua.itea.model;
 import java.io.IOException;
 import java.net.BindException;
 
-public class ServerImplFactory implements ServerFactory {
+public class ServerFactoryImpl implements ServerFactory {
 	private static final int LOWER_BOUND_PORT = 1024;
 	private static final int RANGE_PORT = 49152 - LOWER_BOUND_PORT;
 	private ChannelProvider channelProvider;
 
-	public ServerImplFactory(ChannelProvider channelProvider) {
+	public ServerFactoryImpl(ChannelProvider channelProvider) {
 		this.channelProvider = channelProvider;
 	}
 

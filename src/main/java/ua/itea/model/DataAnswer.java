@@ -21,5 +21,4 @@ public class DataAnswer implements Serializable, Iterable<DataFileAnswer> {
 	public Iterator<DataFileAnswer> iterator() {
 		return answer.iterator();
 	}
-
 }

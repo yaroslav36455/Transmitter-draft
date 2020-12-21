@@ -8,7 +8,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import javax.net.ServerSocketFactory;
+
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -39,15 +42,15 @@ import ua.itea.model.Server;
 import ua.itea.model.ServerProvider;
 import ua.itea.model.ServerChannelFactory;
 import ua.itea.model.ServerFactory;
-import ua.itea.model.ServerImplFactory;
+import ua.itea.model.ServerFactoryImpl;
 import ua.itea.model.SocketFactory;
 
 public class GUIApplicationImpl extends Application implements Initializable {
 	private ServerFactory serverFactory;
-	private ChannelProvider channelProvider;
 	private Client client;
 	
-	private Stage mainStage;
+	private ChannelBase channelBase;
+	
 	@FXML
 	private MenuItem newChannel;
 	@FXML
@@ -64,14 +67,18 @@ public class GUIApplicationImpl extends Application implements Initializable {
 	private TabPane tabPane;
 	
 	public GUIApplicationImpl() {
-		channelProvider = new ChannelProviderImpl(new ChannelBase(), new ServerChannelFactory());
-		serverFactory = new ServerImplFactory(channelProvider);
+		channelBase = new ChannelBase();
+		
+		ChannelProvider serverChannelProvider = new ChannelProviderImpl(channelBase, new ServerChannelFactory());
+		serverFactory = new ServerFactoryImpl(serverChannelProvider);
+		
+		ChannelProvider clientChannelProvider = new ChannelProviderImpl(channelBase, new ClientChannelFactory());
+		Client client = new Client(clientChannelProvider, new ClientSocketFactory());
 	}
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		GUIChannelFactory paneFacotry = new GUIChannelVBoxFactory();
-		ChannelBase channelBase = new ChannelBase();
 
 		newChannel.setOnAction(event -> {
 			try {
@@ -95,10 +102,10 @@ public class GUIApplicationImpl extends Application implements Initializable {
 		newConnection.setOnAction(event -> {
 			if (client == null) {
 				ChannelFactory channelFactory = new ClientChannelFactory();
-				ChannelProviderImpl channelProviderImpl = new ChannelProviderImpl(channelBase, channelFactory);
+				ChannelProvider channelProvider = new ChannelProviderImpl(channelBase, channelFactory);
 				SocketFactory socketFactory = new ClientSocketFactory();
 
-				client = new Client(channelProviderImpl, socketFactory);
+				client = new Client(channelProvider, socketFactory);
 				try {
 					client.createChannel();
 				} catch (IOException e) {
@@ -121,7 +128,7 @@ public class GUIApplicationImpl extends Application implements Initializable {
 				mi.setOnAction(new EventHandler<ActionEvent>() {
 					@Override
 					public void handle(ActionEvent event) {
-						server.stop();
+						server.close();
 						ch.remove(smb);
 					}
 				});
@@ -134,7 +141,6 @@ public class GUIApplicationImpl extends Application implements Initializable {
 
 	@Override
 	public void start(Stage stage) throws Exception {
-		mainStage = stage;
 		ResourceBundle resources = ResourceBundle.getBundle("qwf");
 
 		FXMLLoader loader = new FXMLLoader(GUIApplicationImpl.class.getClassLoader().getResource("window.fxml"),
@@ -143,27 +149,29 @@ public class GUIApplicationImpl extends Application implements Initializable {
 
 		Parent root = loader.load();
 
+		stage.setOnCloseRequest(event->closeAllServers());
+		
 		stage.setScene(new Scene(root));
 		stage.setMinWidth(800);
 		stage.setMinHeight(600);
 		stage.setMaximized(true);
 		stage.setTitle("Transmitter");
 		stage.show();
+	}
+	
+	private void closeAllServers() {
+		ObservableList<Node> ch = serverPane.getChildren();
+		List<SplitMenuButton> arrary = new ArrayList<>();
 		
-		stage.setOnCloseRequest(event->{
-			ObservableList<Node> ch = serverPane.getChildren();
-			List<SplitMenuButton> arrary = new ArrayList<>();
-			
-			for (Node node : ch) {
-				if (node instanceof SplitMenuButton) {
-					arrary.add((SplitMenuButton) node);
-				}
+		for (Node node : ch) {
+			if (node instanceof SplitMenuButton) {
+				arrary.add((SplitMenuButton) node);
 			}
-			
-			for (SplitMenuButton smb : arrary) {
-				smb.getItems().get(0).fire();
-			}
-		});
+		}
+		
+		for (SplitMenuButton smb : arrary) {
+			smb.getItems().get(0).fire();
+		}
 	}
 
 	public static void main(String[] args) {
