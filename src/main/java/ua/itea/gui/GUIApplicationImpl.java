@@ -81,8 +81,8 @@ public class GUIApplicationImpl extends Application implements Initializable {
 	private GUIChannelFactory paneFacotry;
 	
 	public GUIApplicationImpl() {		
-		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
-		gicdf = new GUIIncomingConnectionDialogFactory(gcif);
+//		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
+//		gicdf = new GUIIncomingConnectionDialogFactory(gcif);
 		
 		paneFacotry = new GUIChannelVBoxFactory();
 		
@@ -97,7 +97,12 @@ public class GUIApplicationImpl extends Application implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		serverFactory = new ServerFactory(new GUIConnectionProvider());
+		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
+		try {
+			serverFactory = new ServerFactory(new GUIConnectionProvider(gcif.create()));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		newChannel.setOnAction(event -> {
 			try {

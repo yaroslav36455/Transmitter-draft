@@ -50,7 +50,6 @@ public class Server implements Runnable, AutoCloseable {
 				
 				switch (readBegin(ois)) {
 				case START:
-
 					connectionProvider.startIncoming(socket);
 					break;
 

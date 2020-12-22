@@ -33,11 +33,13 @@ import ua.itea.gui.factory.GUIConnectionInfoFactory;
 import ua.itea.gui.factory.GUIContactDatabaseDialogFactory;
 import ua.itea.gui.factory.GUIConnectionInfoFactory;
 import ua.itea.gui.modellink.ClientGUIChannelSocketFactory;
+import ua.itea.gui.modellink.GUIConnectionProvider;
 import ua.itea.model.Channel;
 import ua.itea.model.ChannelBase;
 import ua.itea.model.ChannelProvider;
 import ua.itea.model.Client;
 import ua.itea.model.ClientChannelFactory;
+import ua.itea.model.ConnectionProvider;
 import ua.itea.model.Downloader;
 import ua.itea.model.FileBase;
 import ua.itea.model.FileSize;
@@ -68,6 +70,7 @@ public class GUIChannelController implements Initializable {
 	@FXML
 	private TableView<GUIRemoteFileRow> remoteComputer;
 
+	private ConnectionProvider connectionProvider;
 	private GUIConnectionInfo connectionInfo;
 	private GUIContactDatabaseDialog contactDatabaseDialog;
 
@@ -90,6 +93,8 @@ public class GUIChannelController implements Initializable {
 
 		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
 		connectionInfo = gcif.create();
+		
+		connectionProvider = new GUIConnectionProvider(connectionInfo);
 
 		cgcsf = new ClientGUIChannelSocketFactory(connectionInfo.getController());
 //		ChannelProvider clientChannelProvider = new ChannelProvider(new ChannelBase(), new ClientChannelFactory());
@@ -140,37 +145,14 @@ public class GUIChannelController implements Initializable {
 		connectionInfo.getController().getAddress().textProperty().bind(addressTextField.textProperty());
 		connectionInfo.getController().getPort().textProperty().bind(portTextField.textProperty());
 		connectButton.setOnAction(event -> {
-//			Alert alert = new Alert(AlertType.NONE, null, ButtonType.CANCEL);
-//
-//			alert.getDialogPane().setContent(connectionInfo.getNode());
-//			alert.setHeaderText("Connection...");
-//			alert.setTitle("Connection");
-//			alert.setGraphic(new ProgressIndicator());
-//			alert.showAndWait();
-
 			String host = connectionInfo.getController().getAddress().getText();
 			int port = Integer.valueOf(connectionInfo.getController().getPort().getText());
-
-			Socket socket = null;
-			ObjectOutputStream oos = null;
-			ObjectInputStream ois = null;
+			
 			try {
-				socket = new Socket(InetAddress.getByName(host), port);
-				
-				oos = new ObjectOutputStream(socket.getOutputStream());
-				oos.writeObject(Mark.START);
-				
-				ois = new ObjectInputStream(socket.getInputStream());
-				System.out.println("Answer: " + (Mark) ois.readObject());
-				
-			} catch (IOException | ClassNotFoundException e) {
+				Socket socket = new Socket(InetAddress.getByName(host), port);
+				connectionProvider.startOutgoing(socket);
+			} catch (IOException e) {
 				e.printStackTrace();
-			} finally {
-				try {
-					socket.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
 			}
 		});
 

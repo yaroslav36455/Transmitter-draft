@@ -31,13 +31,13 @@ public class GUIIncomingConnectionDialog extends Dialog<Channel> {
 		createNewChannel.setSelected(false);
 		tabNameList.setMaxHeight(200);
 		
-		Text text = new Text("Free channels");
+		Text text = new Text("Select free channel");
 		text.setTextAlignment(TextAlignment.RIGHT);
 		
 		VBox vBox = new VBox(gci.getNode(), new BorderPane(text), tabNameList, createNewChannel);
 		getDialogPane().setContent(vBox);
 		getDialogPane().getButtonTypes().addAll(acceptButtonType, ButtonType.CANCEL);
-		setTitle("Select Channel");
+		setTitle("Incoming connection");
 		setResizable(true);
 
 		setListeners();
@@ -71,8 +71,12 @@ public class GUIIncomingConnectionDialog extends Dialog<Channel> {
 
 			@Override
 			public Channel call(ButtonType param) {
-				return createNewChannel.isSelected() ? new ServerChannel()
-													 : sm.getSelectedItem();
+				if (param == acceptButtonType) {
+					return createNewChannel.isSelected() ? new ServerChannel()
+							 							 : sm.getSelectedItem();	
+				}
+				
+				return null;
 			}
 		});
 	}
