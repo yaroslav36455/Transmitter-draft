@@ -6,12 +6,14 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javax.net.ServerSocketFactory;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -26,15 +28,22 @@ import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.Button;
+import javafx.scene.control.Dialog;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import ua.itea.gui.factory.GUIChannelFactory;
 import ua.itea.gui.factory.GUIChannelVBoxFactory;
+import ua.itea.gui.factory.GUIConnectionInfoFactory;
+import ua.itea.gui.factory.GUIConnectionInfoFactory;
+import ua.itea.gui.factory.GUIIncomingConnectionDialogFactory;
+import ua.itea.gui.modellink.ClientGUIChannelSocketFactory;
+import ua.itea.gui.modellink.GUIConnectionProvider;
+import ua.itea.model.Channel;
 import ua.itea.model.ChannelBase;
 import ua.itea.model.ChannelFactory;
 import ua.itea.model.ChannelProvider;
-import ua.itea.model.ChannelProviderImpl;
+import ua.itea.model.ChannelProvider;
 import ua.itea.model.Client;
 import ua.itea.model.ClientChannelFactory;
 import ua.itea.model.ClientSocketFactory;
@@ -42,14 +51,15 @@ import ua.itea.model.Server;
 import ua.itea.model.ServerProvider;
 import ua.itea.model.ServerChannelFactory;
 import ua.itea.model.ServerFactory;
-import ua.itea.model.ServerFactoryImpl;
+import ua.itea.model.ServerFactory;
 import ua.itea.model.SocketFactory;
 
 public class GUIApplicationImpl extends Application implements Initializable {
 	private ServerFactory serverFactory;
 	private Client client;
-	
 	private ChannelBase channelBase;
+	
+	private GUIIncomingConnectionDialogFactory gicdf;
 	
 	@FXML
 	private MenuItem newChannel;
@@ -57,6 +67,8 @@ public class GUIApplicationImpl extends Application implements Initializable {
 	private MenuItem startServer;
 	@FXML
 	private MenuItem newConnection;
+	@FXML
+	private MenuItem acceptConnection;
 	@FXML
 	private MenuItem exit;
 	@FXML
@@ -66,19 +78,26 @@ public class GUIApplicationImpl extends Application implements Initializable {
 	@FXML
 	private TabPane tabPane;
 	
-	public GUIApplicationImpl() {
+	private GUIChannelFactory paneFacotry;
+	
+	public GUIApplicationImpl() {		
+		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
+		gicdf = new GUIIncomingConnectionDialogFactory(gcif);
+		
+		paneFacotry = new GUIChannelVBoxFactory();
+		
 		channelBase = new ChannelBase();
 		
-		ChannelProvider serverChannelProvider = new ChannelProviderImpl(channelBase, new ServerChannelFactory());
-		serverFactory = new ServerFactoryImpl(serverChannelProvider);
+//		ChannelProvider serverChannelProvider = new GUIServerChannelProvider(channelBase);
+//		serverFactory = new ServerFactory(serverChannelProvider);
 		
-		ChannelProvider clientChannelProvider = new ChannelProviderImpl(channelBase, new ClientChannelFactory());
-		Client client = new Client(clientChannelProvider, new ClientSocketFactory());
+//		ChannelProvider clientChannelProvider = new ChannelProvider(channelBase, new ClientChannelFactory());
+//		client = new Client(clientChannelProvider, new GUIClientSocketFactory());
 	}
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		GUIChannelFactory paneFacotry = new GUIChannelVBoxFactory();
+		serverFactory = new ServerFactory(new GUIConnectionProvider());
 
 		newChannel.setOnAction(event -> {
 			try {
@@ -87,7 +106,7 @@ public class GUIApplicationImpl extends Application implements Initializable {
 				Node node = gui.getNode();
 
 				Tab tab = new Tab();
-				Text channelName = gui.getController().getName();
+				Text channelName = gcc.getName();
 
 				tab.textProperty().bindBidirectional(channelName.textProperty());
 				tab.setText("Channel");
@@ -101,16 +120,26 @@ public class GUIApplicationImpl extends Application implements Initializable {
 
 		newConnection.setOnAction(event -> {
 			if (client == null) {
-				ChannelFactory channelFactory = new ClientChannelFactory();
-				ChannelProvider channelProvider = new ChannelProviderImpl(channelBase, channelFactory);
-				SocketFactory socketFactory = new ClientSocketFactory();
-
-				client = new Client(channelProvider, socketFactory);
 				try {
 					client.createChannel();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+			}
+		});
+		
+		acceptConnection.setOnAction(e->{
+			try {
+				GUIIncomingConnectionDialog dialog = gicdf.create();
+				Optional<Channel> opt = dialog.showAndWait();
+				
+				if(opt.isPresent()) {
+					System.out.println("present");
+				} else {
+					System.out.println("not present");
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
 			}
 		});
 		

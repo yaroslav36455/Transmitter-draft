@@ -7,7 +7,7 @@ import java.net.Socket;
 public class ServerChannelFactory implements ChannelFactory {
 	
 	@Override
-	public Channel create(Socket socket) {
+	public Channel create() {
 		Channel channel = new ServerChannel();
 		Downloader downloader = new Downloader();
 		Uploader uploader = new Uploader();
@@ -26,9 +26,6 @@ public class ServerChannelFactory implements ChannelFactory {
 		uploader.setFiles(readable);
 		channel.setDownloader(downloader);
 		channel.setUploader(uploader);
-		
-		channel.setSocket(socket);
-		channel.start();
 		
 		return channel;
 	}

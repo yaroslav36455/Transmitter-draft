@@ -34,6 +34,7 @@
 				</Menu>
 				<Menu text="Connections">
 					<MenuItem text="New..." fx:id="newConnection" />
+					<MenuItem text="Accept..." fx:id="acceptConnection" />
 					<MenuItem text="Prepare" />
 					<MenuItem text="Rename..." />
 					<SeparatorMenuItem />

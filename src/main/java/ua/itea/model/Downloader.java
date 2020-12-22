@@ -6,6 +6,11 @@ public class Downloader {
 	private FileBase<LocalFileWriteable> files;
 	private LoadLimit loadLimit;
 	
+	public Downloader(FileBase<LocalFileWriteable> files) {
+		this();
+		this.files = files;
+	}
+	
 	public Downloader() {
 		loadLimit = new LoadLimit(50);
 	}

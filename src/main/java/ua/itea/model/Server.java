@@ -3,7 +3,6 @@ package ua.itea.model;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -11,21 +10,19 @@ import java.net.Socket;
 public class Server implements Runnable, AutoCloseable {
 	private static final long KEY = (long) (Math.random() * Long.MAX_VALUE);
 	private ServerSocket server;
-	private ChannelProvider channelProvider;
-	private int port;
+	private ConnectionProvider connectionProvider;
 
-	public Server(ChannelProvider channelProvider) {
-		this.channelProvider = channelProvider;
-	}
-
-	public int getPort() {
-		return port;
+	public Server(ConnectionProvider connectionProvider) {
+		this.connectionProvider = connectionProvider;
 	}
 
 	public void start(int port) throws IOException {
 		server = new ServerSocket(port);
-		this.port = port;
 		new Thread(this).start();
+	}
+	
+	public int getPort() {
+		return server.getLocalPort();
 	}
 
 	@Override
@@ -47,14 +44,14 @@ public class Server implements Runnable, AutoCloseable {
 		boolean run = true;
 
 		try {
-
 			while (run) {
 				Socket socket = server.accept();
 				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-
+				
 				switch (readBegin(ois)) {
 				case START:
-					channelProvider.establish(socket);
+
+					connectionProvider.startIncoming(socket);
 					break;
 
 				case STOP:
@@ -85,15 +82,14 @@ public class Server implements Runnable, AutoCloseable {
 
 		try {
 			Mark command = (Mark) ois.readObject();
-			long key = ois.readLong();
-
-			if (command == Mark.STOP && key == KEY) {
-				result = Mark.STOP;
-			} else {
-				result = command;
+			
+			if (command == Mark.STOP && ois.readLong() != KEY) {
+				result = Mark.IGNORE;
 			}
 
-		} catch (Exception e) {
+			result = command;
+		} catch (IOException | ClassNotFoundException e) {
+			result = Mark.IGNORE;
 			e.printStackTrace();
 		}
 

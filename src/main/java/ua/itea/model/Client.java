@@ -13,6 +13,6 @@ public class Client {
 	}
 	
 	public void createChannel() throws UnknownHostException, IOException {
-		channelProvider.establish(socketFactory.create());
+		
 	}
 }

@@ -8,7 +8,7 @@ public class ClientSocketFactory implements SocketFactory {
 
 	@Override
 	public Socket create() throws UnknownHostException, IOException {
-		return new Socket("haven", 44444);
+		return new Socket("127.0.0.1", 44444);
 	}
 
 }

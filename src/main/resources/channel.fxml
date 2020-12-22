@@ -30,8 +30,9 @@
 			<BorderPane>
 				<left>
 					<VBox>
-						<Button text="Add Files" fx:id="addFiles" />
+						<Button text="Add Local Files" fx:id="addLocalFiles" />
 						<Button text="Remove Files" fx:id="removeFiles" />
+						<Button text="Add Remote Files" fx:id="addRemoteFiles" />
 					</VBox>
 				</left>
 				<center>

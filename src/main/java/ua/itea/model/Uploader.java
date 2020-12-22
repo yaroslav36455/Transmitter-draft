@@ -6,6 +6,11 @@ public class Uploader {
 	private FileBase<LocalFileReadable> files;
 	private LoadLimit loadLimit;
 	
+	public Uploader(FileBase<LocalFileReadable> files) {
+		this();
+		this.files = files;
+	}
+	
 	public Uploader() {
 		loadLimit = new LoadLimit(50);
 	}
