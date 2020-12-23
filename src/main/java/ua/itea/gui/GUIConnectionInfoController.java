@@ -19,4 +19,8 @@ public class GUIConnectionInfoController {
 	public Text getPort() {
 		return port;
 	}
+	
+	public void setInfo() {
+		
+	}
 }
