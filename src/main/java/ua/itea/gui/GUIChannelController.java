@@ -39,6 +39,7 @@ import ua.itea.model.ChannelBase;
 import ua.itea.model.ChannelProvider;
 import ua.itea.model.Client;
 import ua.itea.model.ClientChannelFactory;
+import ua.itea.model.ConnectionClient;
 import ua.itea.model.ConnectionProvider;
 import ua.itea.model.Downloader;
 import ua.itea.model.FileBase;
@@ -150,7 +151,8 @@ public class GUIChannelController implements Initializable {
 			
 			try {
 				Socket socket = new Socket(InetAddress.getByName(host), port);
-				connectionProvider.startOutgoing(socket);
+				ConnectionClient c = new ConnectionClient(socket);
+				connectionProvider.startOutgoing(c);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

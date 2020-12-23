@@ -156,7 +156,7 @@ public class GUIApplicationImpl extends Application implements Initializable {
 				MenuItem mi = new MenuItem("Close");
 				SplitMenuButton smb = new SplitMenuButton(mi);
 				
-				smb.setText(Integer.toString(server.getPort()));
+				smb.setText(Integer.toString(server.getLocalPort()));
 				ch.add(ch.size() - 1, smb);
 
 				mi.setOnAction(new EventHandler<ActionEvent>() {

@@ -1,14 +1,12 @@
 package ua.itea.model;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.TimeUnit;
 
 public class Server implements Runnable, AutoCloseable {
-	private static final long KEY = (long) (Math.random() * Long.MAX_VALUE);
 	private ServerSocket server;
 	private ConnectionProvider connectionProvider;
 
@@ -21,19 +19,19 @@ public class Server implements Runnable, AutoCloseable {
 		new Thread(this).start();
 	}
 	
-	public int getPort() {
+	public int getLocalPort() {
 		return server.getLocalPort();
 	}
 
 	@Override
 	public void close() {
+
 		try (Socket socket = new Socket(InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }),
-									    server.getLocalPort());
-				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());) {
-
-			oos.writeObject(Mark.STOP);
-			oos.writeLong(KEY);
-
+										server.getLocalPort());
+				ConnectionClient c = new ConnectionClient(socket)) {
+			
+			c.stop();
+			c.writeKey();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -43,55 +41,35 @@ public class Server implements Runnable, AutoCloseable {
 	public void run() {
 		boolean run = true;
 
-		try {
-			while (run) {
-				Socket socket = server.accept();
-				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+		while (run) {
+			try {
+				ConnectionServer c = new ConnectionServer(server.accept());
 				
-				switch (readBegin(ois)) {
+				switch (c.readMark()) {
 				case START:
-					connectionProvider.startIncoming(socket);
+					 connectionProvider.startIncoming(c);
 					break;
 
 				case STOP:
-					run = false;
+					if (Connection.isValidKey(c.readKey())) {
+						run = false;	
+					}
 					/* no break */
 					
 				case IGNORE:
 				default:
-					ois.close();
-					socket.close();
+					c.close();
 					break;
 				}
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				server.close();
-			} catch (IOException e) {
+			} catch (IOException | ClassNotFoundException e) {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	private Mark readBegin(ObjectInputStream ois) {
-		Mark result = Mark.IGNORE;
-
+		
 		try {
-			Mark command = (Mark) ois.readObject();
-			
-			if (command == Mark.STOP && ois.readLong() != KEY) {
-				result = Mark.IGNORE;
-			}
-
-			result = command;
-		} catch (IOException | ClassNotFoundException e) {
-			result = Mark.IGNORE;
+			server.close();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		return result;
 	}
 }

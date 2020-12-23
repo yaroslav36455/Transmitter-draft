@@ -75,9 +75,6 @@
 						</columns>
 					</TableView>
 				</center>
-				<bottom>
-					<ProgressBar />
-				</bottom>
 			</BorderPane>
 			<BorderPane>
 				<center>
@@ -110,9 +107,6 @@
 						</columns>
 					</TableView>
 				</center>
-				<bottom>
-					<ProgressBar />
-				</bottom>
 			</BorderPane>
 		</items>
 	</SplitPane>

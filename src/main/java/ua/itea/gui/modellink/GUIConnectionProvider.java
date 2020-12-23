@@ -17,7 +17,9 @@ import ua.itea.gui.GUIConnectionInfo;
 import ua.itea.gui.GUIConnectionInfoController;
 import ua.itea.gui.GUIIncomingConnectionDialog;
 import ua.itea.gui.factory.GUIIncomingConnectionDialogFactory;
+import ua.itea.model.ConnectionClient;
 import ua.itea.model.ConnectionProvider;
+import ua.itea.model.ConnectionServer;
 import ua.itea.model.Mark;
 
 public class GUIConnectionProvider implements ConnectionProvider {
@@ -28,26 +30,28 @@ public class GUIConnectionProvider implements ConnectionProvider {
 	}
 
 	@Override
-	public void startIncoming(Socket socket) {
+	public void startIncoming(ConnectionServer c) {
 		Platform.runLater(() -> {
 			try {
+				GUIConnectionInfoController controller = gci.getController();
+				controller.getName().setText(c.readName());
+				controller.getAddress().setText(c.getSocket().getInetAddress().getHostAddress());
+				controller.getPort().setText(String.valueOf(c.getSocket().getPort()));
+				
 				GUIIncomingConnectionDialogFactory gicdf = new GUIIncomingConnectionDialogFactory(gci);
 				GUIIncomingConnectionDialog dialog = gicdf.create();
 				
-				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+				if (dialog.showAndWait().isPresent()) {
+					c.accept();
+				} else {
+					c.reject();
+				}
 				
-				GUIConnectionInfoController controller = gci.getController();
-				controller.getName().setText(ois.readUTF());
-				controller.getAddress().setText(socket.getInetAddress().getHostAddress());
-				controller.getPort().setText(String.valueOf(socket.getPort()));
-				
-				oos.writeObject(dialog.showAndWait().isPresent() ? Mark.ACCEPT : Mark.REJECT);
 			} catch (IOException e) {
 				e.printStackTrace();
 			} finally {
 				try {
-					socket.close();
+					c.close();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -56,7 +60,7 @@ public class GUIConnectionProvider implements ConnectionProvider {
 	}
 
 	@Override
-	public void startOutgoing(Socket socket) {
+	public void startOutgoing(ConnectionClient c) {
 		Platform.runLater(() -> {
 			Alert alert = new Alert(AlertType.NONE, null, ButtonType.CANCEL);
 
@@ -68,16 +72,11 @@ public class GUIConnectionProvider implements ConnectionProvider {
 			alert.show();
 
 			new Thread(()->{
-				try {				
-					ObjectOutputStream oosX = new ObjectOutputStream(socket.getOutputStream());
-					oosX.writeObject(Mark.START);
-					
-					ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-					ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-					oos.writeUTF(gci.getController().getName().getText());
-					oos.flush();
-					
-					Mark mark = (Mark) ois.readObject();
+				try {
+					c.start();
+					c.writeName(gci.getController().getName().getText());
+
+					Mark mark = c.readMark();
 					Platform.runLater(()->{
 						alert.setHeaderText("Answer: " + mark);
 						alert.getButtonTypes().setAll(ButtonType.OK);
@@ -87,7 +86,7 @@ public class GUIConnectionProvider implements ConnectionProvider {
 					e.printStackTrace();
 				} finally {
 					try {
-						socket.close();
+						c.close();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
