@@ -2,27 +2,18 @@ package ua.itea.gui;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.concurrent.TimeUnit;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -31,23 +22,15 @@ import javafx.stage.Window;
 import ua.itea.db.Contact;
 import ua.itea.gui.factory.GUIConnectionInfoFactory;
 import ua.itea.gui.factory.GUIContactDatabaseDialogFactory;
-import ua.itea.gui.factory.GUIConnectionInfoFactory;
 import ua.itea.gui.modellink.ClientGUIChannelSocketFactory;
-import ua.itea.gui.modellink.GUIConnectionProvider;
 import ua.itea.model.Channel;
-import ua.itea.model.ChannelBase;
-import ua.itea.model.ChannelProvider;
-import ua.itea.model.Client;
 import ua.itea.model.ClientChannelFactory;
 import ua.itea.model.ConnectionClient;
-import ua.itea.model.ConnectionProvider;
 import ua.itea.model.Downloader;
 import ua.itea.model.FileBase;
 import ua.itea.model.FileSize;
 import ua.itea.model.LocalFileReadable;
 import ua.itea.model.Mark;
-import ua.itea.model.Server;
-import ua.itea.model.ServerChannel;
 import ua.itea.model.ServerChannelFactory;
 import ua.itea.model.Uploader;
 
@@ -71,7 +54,6 @@ public class GUIChannelController implements Initializable {
 	@FXML
 	private TableView<GUIRemoteFileRow> remoteComputer;
 
-	private ConnectionProvider connectionProvider;
 	private GUIConnectionInfo connectionInfo;
 	private GUIContactDatabaseDialog contactDatabaseDialog;
 
@@ -94,10 +76,8 @@ public class GUIChannelController implements Initializable {
 
 		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
 		connectionInfo = gcif.create();
-		
-		connectionProvider = new GUIConnectionProvider(connectionInfo);
 
-		cgcsf = new ClientGUIChannelSocketFactory(connectionInfo.getController());
+//		cgcsf = new ClientGUIChannelSocketFactory(connectionInfo.getController());
 //		ChannelProvider clientChannelProvider = new ChannelProvider(new ChannelBase(), new ClientChannelFactory());
 //		client = new Client(clientChannelProvider, new GUIClientSocketFactory());
 	}
@@ -152,7 +132,38 @@ public class GUIChannelController implements Initializable {
 			try {
 				Socket socket = new Socket(InetAddress.getByName(host), port);
 				ConnectionClient c = new ConnectionClient(socket);
-				connectionProvider.startOutgoing(c);
+				
+				GUIConnectionInfo gci = connectionInfo;
+				Platform.runLater(() -> {
+					GUIOutgoingConnectionDialog gocd = new GUIOutgoingConnectionDialog(gci);
+					gocd.show();
+
+					new Thread(() -> {
+						try {
+							c.start();
+							c.writeName(gci.getController().getName().getText());
+
+							Mark mark = c.readMark();
+
+							Platform.runLater(() -> {
+								if (mark == Mark.ACCEPT) {
+									gocd.setAccept();
+								} else if (mark == Mark.REJECT) {
+									gocd.setReject();
+								}
+							});
+
+						} catch (ClassNotFoundException | IOException e) {
+							e.printStackTrace();
+						} finally {
+							try {
+								c.close();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					}).start();
+				});
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

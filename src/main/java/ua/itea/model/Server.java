@@ -47,7 +47,7 @@ public class Server implements Runnable, AutoCloseable {
 				
 				switch (c.readMark()) {
 				case START:
-					 connectionProvider.startIncoming(c);
+					 connectionProvider.start(c);
 					break;
 
 				case STOP:

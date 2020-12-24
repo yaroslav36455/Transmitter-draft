@@ -17,34 +17,19 @@ public class GUIOutgoingConnectionDialog extends Dialog<ButtonType> {
 		setTitle("Outgoing connection");
 		setHeaderText("Connection...");
 		setGraphic(new ProgressIndicator());
-
-		setListeners();
 	}
-
-	private void setListeners() {
-//		setOnShowing(e->{
-//			new Thread(()->{
-//				try {
-//					c.start();
-//					c.writeName(gci.getController().getName().getText());
-//
-//					Mark mark = c.readMark();
-//					Platform.runLater(()->{
-//						setHeaderText("Answer: " + mark);
-//						getDialogPane().getButtonTypes().setAll(ButtonType.OK);
-//					});
-//					
-//				} catch (IOException | ClassNotFoundException e) {
-//					e.printStackTrace();
-//				} finally {
-//					try {
-//						c.close();
-//					} catch (IOException e) {
-//						e.printStackTrace();
-//					}
-//				}
-//				
-//			}).start();
-//		});
+	
+	public void setAccept() {
+		getDialogPane().getButtonTypes().setAll(ButtonType.OK);
+		setHeaderText("Answer: " + Mark.ACCEPT);
+		
+		((ProgressIndicator) getGraphic()).setProgress(1);
+	}
+	
+	public void setReject() {
+		getDialogPane().getButtonTypes().setAll(ButtonType.OK);
+		setHeaderText("Answer: " + Mark.REJECT);
+		
+		setGraphic(null);
 	}
 }

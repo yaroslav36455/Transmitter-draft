@@ -1,19 +1,15 @@
 package ua.itea.gui;
 
 import java.io.IOException;
-import java.net.BindException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
-
-import javax.net.ServerSocketFactory;
+import java.util.concurrent.TimeUnit;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -28,31 +24,20 @@ import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.Button;
-import javafx.scene.control.Dialog;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import ua.itea.gui.factory.GUIChannelFactory;
 import ua.itea.gui.factory.GUIChannelVBoxFactory;
 import ua.itea.gui.factory.GUIConnectionInfoFactory;
-import ua.itea.gui.factory.GUIConnectionInfoFactory;
 import ua.itea.gui.factory.GUIIncomingConnectionDialogFactory;
-import ua.itea.gui.modellink.ClientGUIChannelSocketFactory;
-import ua.itea.gui.modellink.GUIConnectionProvider;
 import ua.itea.model.Channel;
 import ua.itea.model.ChannelBase;
-import ua.itea.model.ChannelFactory;
-import ua.itea.model.ChannelProvider;
-import ua.itea.model.ChannelProvider;
 import ua.itea.model.Client;
-import ua.itea.model.ClientChannelFactory;
-import ua.itea.model.ClientSocketFactory;
+import ua.itea.model.ConnectionProvider;
+import ua.itea.model.ConnectionServer;
 import ua.itea.model.Server;
-import ua.itea.model.ServerProvider;
-import ua.itea.model.ServerChannelFactory;
 import ua.itea.model.ServerFactory;
-import ua.itea.model.ServerFactory;
-import ua.itea.model.SocketFactory;
 
 public class GUIApplicationImpl extends Application implements Initializable {
 	private ServerFactory serverFactory;
@@ -99,7 +84,41 @@ public class GUIApplicationImpl extends Application implements Initializable {
 	public void initialize(URL location, ResourceBundle resources) {
 		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
 		try {
-			serverFactory = new ServerFactory(new GUIConnectionProvider(gcif.create()));
+			GUIConnectionInfo gci = gcif.create();
+			serverFactory = new ServerFactory(new ConnectionProvider() {
+				
+				@Override
+				public void start(ConnectionServer c) {
+					Platform.runLater(() -> {
+						try {
+							GUIConnectionInfoController controller = gci.getController();
+							controller.getName().setText(c.readName());
+							controller.getAddress().setText(c.getSocket().getInetAddress().getHostAddress());
+							controller.getPort().setText(String.valueOf(c.getSocket().getPort()));
+
+							GUIIncomingConnectionDialogFactory gicdf = new GUIIncomingConnectionDialogFactory(gci);
+							GUIIncomingConnectionDialog dialog = gicdf.create();
+							
+							dialog.setItems(tabPane);
+							
+							if (dialog.showAndWait().isPresent()) {
+								c.accept();
+							} else {
+								c.reject();
+							}
+
+						} catch (IOException e) {
+							e.printStackTrace();
+						} finally {
+							try {
+								c.close();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					});
+				}
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -136,7 +155,7 @@ public class GUIApplicationImpl extends Application implements Initializable {
 		acceptConnection.setOnAction(e->{
 			try {
 				GUIIncomingConnectionDialog dialog = gicdf.create();
-				Optional<Channel> opt = dialog.showAndWait();
+				Optional<Tab> opt = dialog.showAndWait();
 				
 				if(opt.isPresent()) {
 					System.out.println("present");

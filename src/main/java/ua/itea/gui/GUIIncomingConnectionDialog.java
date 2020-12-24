@@ -2,14 +2,18 @@ package ua.itea.gui;
 
 import java.io.IOException;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionModel;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -18,8 +22,8 @@ import javafx.util.Callback;
 import ua.itea.model.Channel;
 import ua.itea.model.ServerChannel;
 
-public class GUIIncomingConnectionDialog extends Dialog<Channel> {
-	private ListView<Channel> tabNameList;
+public class GUIIncomingConnectionDialog extends Dialog<Tab> {
+	private ListView<Tab> tabNameList;
 	private CheckBox createNewChannel;
 	private ButtonType acceptButtonType;
 
@@ -39,16 +43,43 @@ public class GUIIncomingConnectionDialog extends Dialog<Channel> {
 		getDialogPane().getButtonTypes().addAll(acceptButtonType, ButtonType.CANCEL);
 		setTitle("Incoming connection");
 		setResizable(true);
-
+		
 		setListeners();
+		
+		tabNameList.setCellFactory(new Callback<ListView<Tab>, ListCell<Tab>>() {
+
+			@Override
+			public ListCell<Tab> call(ListView<Tab> param) {
+				return new ListCell<Tab>() {
+					@Override
+					protected void updateItem(Tab item, boolean empty) {
+						super.updateItem(item, empty);
+						
+						if (item != null) {
+							super.setText(item.getText());	
+						}
+					}
+				};
+			}
+		});
 	}
 
-	public void setItems(ObservableList<Channel> items) {
-		this.tabNameList.setItems(items);
+	public void setItems(TabPane tabPane) {
+		this.tabNameList.setItems(tabPane.getTabs());
+		SelectionModel<Tab> tabPaneSM = tabPane.getSelectionModel();
+		SelectionModel<Tab> listViewSM = tabNameList.getSelectionModel();
+		
+		listViewSM.selectedIndexProperty().addListener(e->{
+			int selected = listViewSM.getSelectedIndex();
+			
+			if (selected != -1) {
+				tabPaneSM.select(selected);
+			}
+		});
 	}
 
 	private void setListeners() {
-		SelectionModel<Channel> sm = tabNameList.getSelectionModel();
+		SelectionModel<Tab> sm = tabNameList.getSelectionModel();
 		Node acceptButton = getDialogPane().lookupButton(acceptButtonType);
 		acceptButton.setDisable(true);
 
@@ -67,12 +98,12 @@ public class GUIIncomingConnectionDialog extends Dialog<Channel> {
 			listItemSelectionEvent(acceptButton, sm);
 		});
 
-		setResultConverter(new Callback<ButtonType, Channel>() {
+		setResultConverter(new Callback<ButtonType, Tab>() {
 
 			@Override
-			public Channel call(ButtonType param) {
+			public Tab call(ButtonType param) {
 				if (param == acceptButtonType) {
-					return createNewChannel.isSelected() ? new ServerChannel()
+					return createNewChannel.isSelected() ? new Tab("New Tab Text")
 							 							 : sm.getSelectedItem();	
 				}
 				
@@ -82,7 +113,7 @@ public class GUIIncomingConnectionDialog extends Dialog<Channel> {
 	}
 
 	private void listItemSelectionEvent(Node acceptButton,
-										SelectionModel<Channel> sm) {
+										SelectionModel<Tab> sm) {
 		if (sm.getSelectedIndex() == -1) {
 			acceptButton.setDisable(true);
 		} else {
