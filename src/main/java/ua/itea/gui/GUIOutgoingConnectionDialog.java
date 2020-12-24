@@ -1,9 +1,5 @@
 package ua.itea.gui;
 
-import java.io.IOException;
-import java.util.Optional;
-
-import javafx.application.Platform;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.ProgressIndicator;

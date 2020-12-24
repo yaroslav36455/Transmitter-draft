@@ -1,17 +1,12 @@
 package ua.itea.gui;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import javafx.collections.FXCollections;
-import javafx.collections.ModifiableObservableListBase;
-import javafx.collections.ObservableArray;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.text.Text;
 import ua.itea.gui.factory.GUIChannelFactory;
 
 public class GUIChannelProvider {

@@ -29,9 +29,6 @@
 					<MenuItem text="New..." fx:id="newChannel" />
 					<MenuItem text="List" />
 				</Menu>
-				<Menu text="Servers">
-					<MenuItem text="Start" fx:id="startServer" />
-				</Menu>
 				<Menu text="Connections">
 					<MenuItem text="New..." fx:id="newConnection" />
 					<MenuItem text="Accept..." fx:id="acceptConnection" />
@@ -40,6 +37,9 @@
 					<SeparatorMenuItem />
 					<MenuItem text="Close Completed" />
 					<MenuItem text="Close All" />
+				</Menu>
+				<Menu text="User">
+					<MenuItem text="Contacts" fx:id="contacts" />
 				</Menu>
 				<Menu text="Options">
 				</Menu>

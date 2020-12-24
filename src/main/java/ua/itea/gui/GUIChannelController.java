@@ -176,6 +176,7 @@ public class GUIChannelController implements Initializable {
 				Contact contact = result.get();
 				addressTextField.setText(contact.getAddress());
 				portTextField.setText(String.valueOf(contact.getPort()));
+				connectionInfo.getController().getName().setText(contact.getName());
 			}
 		});
 	}

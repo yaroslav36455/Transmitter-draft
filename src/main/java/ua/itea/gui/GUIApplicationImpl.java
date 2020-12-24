@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -22,18 +19,14 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitMenuButton;
-import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.Button;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import ua.itea.gui.factory.GUIChannelFactory;
+import ua.itea.gui.factory.GUIAddContactDialogFactory;
 import ua.itea.gui.factory.GUIChannelVBoxFactory;
 import ua.itea.gui.factory.GUIConnectionInfoFactory;
 import ua.itea.gui.factory.GUIIncomingConnectionDialogFactory;
-import ua.itea.model.Channel;
-import ua.itea.model.ChannelBase;
 import ua.itea.model.Client;
 import ua.itea.model.ConnectionProvider;
 import ua.itea.model.ConnectionServer;
@@ -43,20 +36,19 @@ import ua.itea.model.ServerFactory;
 public class GUIApplicationImpl extends Application implements Initializable {
 	private ServerFactory serverFactory;
 	private Client client;
-	private ChannelBase channelBase;
 	
 	private GUIIncomingConnectionDialogFactory gicdf;
 	
 	@FXML
 	private MenuItem newChannel;
 	@FXML
-	private MenuItem startServer;
-	@FXML
 	private MenuItem newConnection;
 	@FXML
 	private MenuItem acceptConnection;
 	@FXML
 	private MenuItem exit;
+	@FXML 
+	private MenuItem contacts;
 	@FXML
 	private FlowPane serverPane;
 	@FXML
@@ -141,19 +133,19 @@ public class GUIApplicationImpl extends Application implements Initializable {
 			}
 		});
 		
-		acceptConnection.setOnAction(e->{
+		contacts.setOnAction(e->{
 			try {
-				GUIIncomingConnectionDialog dialog = gicdf.create();
-				Optional<GUIChannel> opt = dialog.showAndWait();
-				
-				if(opt.isPresent()) {
-					System.out.println("present");
-				} else {
-					System.out.println("not present");
-				}
-			} catch (IOException e1) {
-				e1.printStackTrace();
+				GUIAddContactDialogFactory factory = new GUIAddContactDialogFactory();
+				GUIContactDatabaseEditorDialog gcdd = new GUIContactDatabaseEditorDialog(factory);
+				FXMLLoader loader = new FXMLLoader();
+				loader.setLocation(this.getClass().getClassLoader().getResource("contact-database.fxml"));
+				loader.setController(gcdd);
+				loader.load();
+				gcdd.show();	
+			} catch (Exception ex) {
+				ex.printStackTrace();
 			}
+			
 		});
 		
 		addServer.setOnAction(e -> {
@@ -190,8 +182,6 @@ public class GUIApplicationImpl extends Application implements Initializable {
 		loader.setController(this);
 
 		Parent root = loader.load();
-
-		stage.setOnCloseRequest(event->closeAllServers());
 		
 		stage.setScene(new Scene(root));
 		stage.setMinWidth(800);
@@ -199,6 +189,13 @@ public class GUIApplicationImpl extends Application implements Initializable {
 		stage.setMaximized(true);
 		stage.setTitle("Transmitter");
 		stage.show();
+		
+		stage.setOnCloseRequest(event->closeAllServers());
+		
+		exit.setOnAction(e->{
+			closeAllServers();
+			stage.close();
+		});
 	}
 	
 	private void closeAllServers() {

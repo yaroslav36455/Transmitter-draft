@@ -17,8 +17,11 @@ public class ContactDatabase {
 			= " CREATE UNIQUE INDEX IF NOT EXISTS `name_address_port` on `contacts`"
 			+ " (`name`, `address`, `port`);";
 	private static final String INSERT = "INSERT OR IGNORE INTO `contacts` "
-			+ "(name, address, port) VALUES (?, ?, ?);";
+			+ "(`name`, `address`, `port`) VALUES (?, ?, ?);";
 	private static final String READ_ALL = "SELECT * FROM `contacts`;";
+	private static final String REMOVE = "DELETE FROM `contacts` WHERE"
+			+ " `contacts`.`name` = ? AND `contacts`.`address` = ?"
+			+ " AND `contacts`.`port` = ?;";
 	
 	public ContactDatabase(Connection conn) throws SQLException {
 		Statement statement = conn.createStatement();
@@ -62,7 +65,25 @@ public class ContactDatabase {
 		return contacts;
 	}
 	
-	public void remove(List<Contact> contacts) {
+	public void remove(Connection conn, List<Contact> contacts) throws SQLException {
+		PreparedStatement statement = conn.prepareStatement(REMOVE);
 		
+		try {
+			conn.setAutoCommit(false);
+			for (Contact contact : contacts) {
+				statement.setString(1, contact.getName());
+				statement.setString(2, contact.getAddress());
+				statement.setInt(3, contact.getPort());
+				
+				statement.execute();
+			}
+			conn.commit();
+		} catch(SQLException e) {
+			conn.rollback();
+			throw e;
+		}
+
+		statement.close();
+		conn.close();
 	}
 }
