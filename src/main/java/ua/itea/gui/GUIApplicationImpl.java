@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -63,15 +64,13 @@ public class GUIApplicationImpl extends Application implements Initializable {
 	@FXML
 	private TabPane tabPane;
 	
-	private GUIChannelFactory paneFacotry;
+	private GUIChannelProvider gcp;
 	
 	public GUIApplicationImpl() {		
 //		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
 //		gicdf = new GUIIncomingConnectionDialogFactory(gcif);
 		
-		paneFacotry = new GUIChannelVBoxFactory();
-		
-		channelBase = new ChannelBase();
+//		channelBase = new ChannelBase();
 		
 //		ChannelProvider serverChannelProvider = new GUIServerChannelProvider(channelBase);
 //		serverFactory = new ServerFactory(serverChannelProvider);
@@ -82,6 +81,7 @@ public class GUIApplicationImpl extends Application implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
+		gcp = new GUIChannelProvider(tabPane, new GUIChannelVBoxFactory());
 		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
 		try {
 			GUIConnectionInfo gci = gcif.create();
@@ -99,7 +99,7 @@ public class GUIApplicationImpl extends Application implements Initializable {
 							GUIIncomingConnectionDialogFactory gicdf = new GUIIncomingConnectionDialogFactory(gci);
 							GUIIncomingConnectionDialog dialog = gicdf.create();
 							
-							dialog.setItems(tabPane);
+							dialog.setGUIChannelProvider(gcp);
 							
 							if (dialog.showAndWait().isPresent()) {
 								c.accept();
@@ -125,20 +125,9 @@ public class GUIApplicationImpl extends Application implements Initializable {
 
 		newChannel.setOnAction(event -> {
 			try {
-				GUIChannel gui = paneFacotry.create();
-				GUIChannelController gcc = gui.getController();
-				Node node = gui.getNode();
-
-				Tab tab = new Tab();
-				Text channelName = gcc.getName();
-
-				tab.textProperty().bindBidirectional(channelName.textProperty());
-				tab.setText("Channel");
-				tab.setContent(node);
-				tabPane.getTabs().add(tab);
-				tabPane.getSelectionModel().selectLast();
-			} catch (IOException e1) {
-				e1.printStackTrace();
+				gcp.create();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		});
 
@@ -155,7 +144,7 @@ public class GUIApplicationImpl extends Application implements Initializable {
 		acceptConnection.setOnAction(e->{
 			try {
 				GUIIncomingConnectionDialog dialog = gicdf.create();
-				Optional<Tab> opt = dialog.showAndWait();
+				Optional<GUIChannel> opt = dialog.showAndWait();
 				
 				if(opt.isPresent()) {
 					System.out.println("present");

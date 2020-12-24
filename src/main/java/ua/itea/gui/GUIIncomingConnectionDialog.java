@@ -22,8 +22,9 @@ import javafx.util.Callback;
 import ua.itea.model.Channel;
 import ua.itea.model.ServerChannel;
 
-public class GUIIncomingConnectionDialog extends Dialog<Tab> {
-	private ListView<Tab> tabNameList;
+public class GUIIncomingConnectionDialog extends Dialog<GUIChannel> {
+	private GUIChannelProvider gcp;
+	private ListView<GUIChannel> tabNameList;
 	private CheckBox createNewChannel;
 	private ButtonType acceptButtonType;
 
@@ -31,32 +32,33 @@ public class GUIIncomingConnectionDialog extends Dialog<Tab> {
 		tabNameList = new ListView<>();
 		acceptButtonType = new ButtonType("Allow");
 		createNewChannel = new CheckBox("create new channel");
-		
+
 		createNewChannel.setSelected(false);
 		tabNameList.setMaxHeight(200);
-		
+
 		Text text = new Text("Select free channel");
 		text.setTextAlignment(TextAlignment.RIGHT);
-		
+
 		VBox vBox = new VBox(gci.getNode(), new BorderPane(text), tabNameList, createNewChannel);
 		getDialogPane().setContent(vBox);
 		getDialogPane().getButtonTypes().addAll(acceptButtonType, ButtonType.CANCEL);
 		setTitle("Incoming connection");
 		setResizable(true);
-		
+
 		setListeners();
-		
-		tabNameList.setCellFactory(new Callback<ListView<Tab>, ListCell<Tab>>() {
+
+		tabNameList.setCellFactory(new Callback<ListView<GUIChannel>, ListCell<GUIChannel>>() {
 
 			@Override
-			public ListCell<Tab> call(ListView<Tab> param) {
-				return new ListCell<Tab>() {
+			public ListCell<GUIChannel> call(ListView<GUIChannel> param) {
+				return new ListCell<GUIChannel>() {
 					@Override
-					protected void updateItem(Tab item, boolean empty) {
+					protected void updateItem(GUIChannel item, boolean empty) {
 						super.updateItem(item, empty);
 						
 						if (item != null) {
-							super.setText(item.getText());	
+							Text name = item.getController().getName();
+							textProperty().bindBidirectional(name.textProperty());
 						}
 					}
 				};
@@ -64,14 +66,15 @@ public class GUIIncomingConnectionDialog extends Dialog<Tab> {
 		});
 	}
 
-	public void setItems(TabPane tabPane) {
-		this.tabNameList.setItems(tabPane.getTabs());
-		SelectionModel<Tab> tabPaneSM = tabPane.getSelectionModel();
-		SelectionModel<Tab> listViewSM = tabNameList.getSelectionModel();
-		
-		listViewSM.selectedIndexProperty().addListener(e->{
+	public void setGUIChannelProvider(GUIChannelProvider gcp) {
+		this.gcp = gcp;
+		this.tabNameList.setItems(gcp.getChannels());
+		SelectionModel<Tab> tabPaneSM = gcp.getTabPane().getSelectionModel();
+		SelectionModel<GUIChannel> listViewSM = tabNameList.getSelectionModel();
+
+		listViewSM.selectedIndexProperty().addListener(e -> {
 			int selected = listViewSM.getSelectedIndex();
-			
+
 			if (selected != -1) {
 				tabPaneSM.select(selected);
 			}
@@ -79,7 +82,7 @@ public class GUIIncomingConnectionDialog extends Dialog<Tab> {
 	}
 
 	private void setListeners() {
-		SelectionModel<Tab> sm = tabNameList.getSelectionModel();
+		SelectionModel<GUIChannel> sm = tabNameList.getSelectionModel();
 		Node acceptButton = getDialogPane().lookupButton(acceptButtonType);
 		acceptButton.setDisable(true);
 
@@ -98,22 +101,25 @@ public class GUIIncomingConnectionDialog extends Dialog<Tab> {
 			listItemSelectionEvent(acceptButton, sm);
 		});
 
-		setResultConverter(new Callback<ButtonType, Tab>() {
+		setResultConverter(new Callback<ButtonType, GUIChannel>() {
 
 			@Override
-			public Tab call(ButtonType param) {
-				if (param == acceptButtonType) {
-					return createNewChannel.isSelected() ? new Tab("New Tab Text")
-							 							 : sm.getSelectedItem();	
+			public GUIChannel call(ButtonType param) {
+				try {
+					if (param == acceptButtonType) {
+						return createNewChannel.isSelected() ? gcp.create()
+															 : sm.getSelectedItem();
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-				
+
 				return null;
 			}
 		});
 	}
 
-	private void listItemSelectionEvent(Node acceptButton,
-										SelectionModel<Tab> sm) {
+	private void listItemSelectionEvent(Node acceptButton, SelectionModel<GUIChannel> sm) {
 		if (sm.getSelectedIndex() == -1) {
 			acceptButton.setDisable(true);
 		} else {
