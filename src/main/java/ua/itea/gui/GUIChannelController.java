@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
+import java.nio.channels.Channels;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -13,7 +14,6 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -23,15 +23,17 @@ import ua.itea.db.Contact;
 import ua.itea.gui.factory.GUIConnectionInfoFactory;
 import ua.itea.gui.factory.GUIContactDatabaseDialogFactory;
 import ua.itea.gui.modellink.ClientGUIChannelSocketFactory;
+import ua.itea.gui.modellink.GUIDownloaderRegistered;
+import ua.itea.gui.modellink.GUIUploaderFiles;
 import ua.itea.model.Channel;
-import ua.itea.model.ClientChannelFactory;
+import ua.itea.model.ChannelFactory;
+import ua.itea.model.Connection;
 import ua.itea.model.ConnectionClient;
 import ua.itea.model.Downloader;
 import ua.itea.model.FileBase;
-import ua.itea.model.FileSize;
 import ua.itea.model.LocalFileReadable;
 import ua.itea.model.Mark;
-import ua.itea.model.ServerChannelFactory;
+import ua.itea.model.RemoteFile;
 import ua.itea.model.Uploader;
 
 public class GUIChannelController implements Initializable {
@@ -57,8 +59,7 @@ public class GUIChannelController implements Initializable {
 	private GUIConnectionInfo connectionInfo;
 	private GUIContactDatabaseDialog contactDatabaseDialog;
 
-	private ClientChannelFactory ccf;
-	private ServerChannelFactory scf;
+	private ChannelFactory channelFactory;
 
 	private Channel channel;
 	private Downloader downloader;
@@ -68,9 +69,6 @@ public class GUIChannelController implements Initializable {
 //	private Client client;
 
 	public GUIChannelController() throws IOException {
-		uploader = new Uploader(new FileBase<>());
-		downloader = new Downloader(new FileBase<>());
-
 		GUIContactDatabaseDialogFactory gcddf = new GUIContactDatabaseDialogFactory();
 		contactDatabaseDialog = gcddf.create();
 
@@ -88,7 +86,17 @@ public class GUIChannelController implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-
+		uploader = new Uploader();
+		uploader.setFiles(new GUIUploaderFiles(localComputer));
+		uploader.setRegistered(new FileBase<>());
+		
+		downloader = new Downloader();
+		downloader.setFiles(new FileBase<>());
+		downloader.setRegistered(new GUIDownloaderRegistered(remoteComputer));
+		
+		channelFactory = new ChannelFactory(downloader, uploader);
+		
+		/***********************************************************************/
 		localComputer.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		remoteComputer.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
@@ -99,28 +107,27 @@ public class GUIChannelController implements Initializable {
 				List<File> files = fileChooser.getFiles(window);
 
 				if (files != null) {
+					FileBase<RemoteFile> registeredFiles = new FileBase<>();
+					FileBase<LocalFileReadable> fileBase = uploader.getFiles();
+					
 					for (File file : files) {
-						FileBase<LocalFileReadable> fileBase = uploader.getFiles();
 						LocalFileReadable localFileReadable = new LocalFileReadable(file);
+						RemoteFile remoteFile = new RemoteFile(localFileReadable.getFileId(),
+															   localFileReadable.getFileSize(),
+															   localFileReadable.getFile().getName());
+						
 						fileBase.add(localFileReadable);
-						FileSize fs = localFileReadable.getFileSize();
-
-						String fileName = file.getName();
-						String filePath = file.getPath();
-						double progress = fs.getFilledSize().getSize() / (double) fs.getTotalSize().getSize();
-						ProgressBar progressBar = new ProgressBar(progress);
-
-						GUILocalFileRow lfr = new GUILocalFileRow(fileName, filePath, fs, progressBar);
-						localComputer.getItems().add(lfr);
+						registeredFiles.add(remoteFile);
+					}
+					
+					uploader.getRegistered().addAll(registeredFiles);
+					if (channel != null && channel.isConnectionEstablished()) {
+						channel.registerNewFiles(registeredFiles);	
 					}
 				}
-			} catch (IOException e) {
+			} catch (IOException | InterruptedException e) {
 				e.printStackTrace();
 			}
-		});
-
-		removeFiles.setOnAction(event -> {
-			localComputer.getItems().removeAll(localComputer.getSelectionModel().getSelectedItems());
 		});
 
 		connectionInfo.getController().getAddress().textProperty().bind(addressTextField.textProperty());
@@ -148,23 +155,36 @@ public class GUIChannelController implements Initializable {
 							Platform.runLater(() -> {
 								if (mark == Mark.ACCEPT) {
 									gocd.setAccept();
-								} else if (mark == Mark.REJECT) {
+									setConnection(c);
+								} else { // mark == Mark.REJECT
 									gocd.setReject();
+									try {
+										c.close();
+									} catch (IOException ex) {
+										ex.printStackTrace();
+									}
 								}
 							});
 
 						} catch (ClassNotFoundException | IOException e) {
 							e.printStackTrace();
-						} finally {
 							try {
 								c.close();
-							} catch (IOException e) {
-								e.printStackTrace();
+							} catch (IOException ex) {
+								ex.printStackTrace();
 							}
 						}
 					}).start();
 				});
 			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
+		
+		removeFiles.setOnAction(event->{
+			try {
+				channel.stop();
+			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		});
@@ -179,5 +199,26 @@ public class GUIChannelController implements Initializable {
 				connectionInfo.getController().getName().setText(contact.getName());
 			}
 		});
+	}
+
+	public void setConnection(Connection c) {
+		channel = channelFactory.create(c);
+		channel.start();
+		try {
+			channel.registerNewFiles(uploader.getRegistered());
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void closeConnection() {
+		try {
+			if (channel != null) {
+				channel.stop();
+				channel = null;	
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 }

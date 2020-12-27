@@ -3,18 +3,22 @@ package ua.itea.model;
 import java.io.IOException;
 
 public class Uploader {
+	private FileBase<RemoteFile> registered;
 	private FileBase<LocalFileReadable> files;
 	private LoadLimit loadLimit;
 	
-	public Uploader(FileBase<LocalFileReadable> files) {
-		this();
-		this.files = files;
-	}
-	
 	public Uploader() {
-		loadLimit = new LoadLimit(50);
+		this.loadLimit = new LoadLimit(50);
 	}
-	
+
+	public FileBase<RemoteFile> getRegistered() {
+		return registered;
+	}
+
+	public void setRegistered(FileBase<RemoteFile> registered) {
+		this.registered = registered;
+	}
+
 	public FileBase<LocalFileReadable> getFiles() {
 		return files;
 	}

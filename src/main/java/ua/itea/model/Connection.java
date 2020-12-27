@@ -36,8 +36,12 @@ public abstract class Connection implements AutoCloseable {
 		oos.writeObject(Mark.START);
 	}
 	
-	public void stop() throws IOException {
-		oos.writeObject(Mark.STOP);
+	public void stopReceiver() throws IOException {
+		oos.writeObject(Mark.STOP_AS_RECEIVER);
+	}
+	
+	public void stopRequester() throws IOException {
+		oos.writeObject(Mark.STOP_AS_REQUESTER);
 	}
 	
 	public void writeName(String name) throws IOException {
@@ -49,13 +53,22 @@ public abstract class Connection implements AutoCloseable {
 		return ois.readUTF();
 	}
 	
-	public void write(Message message) throws IOException {
-		oos.writeObject(Mark.MESSAGE);
+	public void writeDataMessage(DataMessage message) throws IOException {
+		oos.writeObject(Mark.DATA);
 		oos.writeObject(message);
 	}
 	
-	public void read(Message message) throws IOException {
+	public DataMessage readDataMessage() throws IOException, ClassNotFoundException {
+		return (DataMessage) ois.readObject();
+	}
+	
+	public void writeNewFileMessage(NewFilesMessage message) throws IOException {
+		oos.writeObject(Mark.NEW_FILES);
 		oos.writeObject(message);
+	}
+	
+	public NewFilesMessage readNewFileMessage() throws ClassNotFoundException, IOException {
+		return (NewFilesMessage) ois.readObject();
 	}
 	
 	public void accept() throws IOException {
@@ -69,5 +82,9 @@ public abstract class Connection implements AutoCloseable {
 	@Override
 	public void close() throws IOException {
 		socket.close();
+	}
+	
+	public boolean isClosed() {
+		return socket.isClosed();
 	}
 }

@@ -17,4 +17,8 @@ public class ConnectionClient extends Connection {
 		oos.writeLong(getKey());
 		oos.flush();
 	}
+
+	public void stopServer() throws IOException {
+		oos.writeObject(Mark.STOP_SERVER);
+	}
 }

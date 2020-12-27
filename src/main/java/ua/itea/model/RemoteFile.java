@@ -1,6 +1,9 @@
 package ua.itea.model;
 
-public class RemoteFile extends FileHandler {
+import java.io.Serializable;
+
+public class RemoteFile extends FileHandler implements Serializable {
+	private static final long serialVersionUID = -463906602128485756L;
 	private final String name;
 	private final FileSize fileSize;
 	

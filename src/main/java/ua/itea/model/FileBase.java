@@ -1,10 +1,13 @@
 package ua.itea.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class FileBase<T extends FileHandler> implements Iterable<T> {
+public class FileBase<T extends FileHandler> implements Iterable<T>,
+														Serializable {
+	private static final long serialVersionUID = 8767955375425168764L;
 	private List<T> files;
 	
 	public FileBase() {
@@ -26,7 +29,19 @@ public class FileBase<T extends FileHandler> implements Iterable<T> {
 	}
 	
 	public boolean add(T localFile) {
-		files.add(localFile);
-		return true;
+		return files.add(localFile);
+	}
+	
+	public boolean addAll(FileBase<T> newFiles) {
+		boolean result = true;
+		for (T t : newFiles) {
+			result = result && add(t);
+		}
+		
+		return result;
+	}
+	
+	public void clear() {
+		files.clear();
 	}
 }

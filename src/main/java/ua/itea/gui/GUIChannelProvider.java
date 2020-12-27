@@ -1,9 +1,13 @@
 package ua.itea.gui;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -39,7 +43,15 @@ public class GUIChannelProvider {
 		tab.setText("Channel");
 		tab.setContent(node);
 		tab.setOnClosed(e -> {
-			channels.removeIf(guiChannel -> guiChannel.getNode() == tab.getContent());
+			channels.removeIf(guiChannel -> {
+				boolean found = guiChannel.getNode() == tab.getContent();
+				
+				if (found) {
+					guiChannel.getController().closeConnection();
+				}
+				
+				return found;
+			});
 		});
 		
 		tabPane.getTabs().add(tab);
@@ -48,5 +60,13 @@ public class GUIChannelProvider {
 		channels.add(gui);
 
 		return gui;
+	}
+
+	public void closeAll() {
+		for (Tab tab : tabPane.getTabs()) {
+			ActionEvent.fireEvent(tab, new Event(Tab.CLOSED_EVENT));
+		}
+		
+		tabPane.getTabs().clear();
 	}
 }

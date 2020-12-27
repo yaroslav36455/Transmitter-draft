@@ -30,7 +30,7 @@ public class Server implements Runnable, AutoCloseable {
 										server.getLocalPort());
 				ConnectionClient c = new ConnectionClient(socket)) {
 			
-			c.stop();
+			c.stopServer();
 			c.writeKey();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -50,7 +50,7 @@ public class Server implements Runnable, AutoCloseable {
 					 connectionProvider.start(c);
 					break;
 
-				case STOP:
+				case STOP_SERVER:
 					if (Connection.isValidKey(c.readKey())) {
 						run = false;	
 					}

@@ -1,6 +1,9 @@
 package ua.itea.model;
 
-public class MemorySize {
+import java.io.Serializable;
+
+public class MemorySize implements Serializable {
+	private static final long serialVersionUID = 4278915701923881980L;
 	private final long size;
 
 	public MemorySize(long size) {

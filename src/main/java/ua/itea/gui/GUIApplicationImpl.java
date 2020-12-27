@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javafx.application.Application;
@@ -27,7 +28,6 @@ import ua.itea.gui.factory.GUIAddContactDialogFactory;
 import ua.itea.gui.factory.GUIChannelVBoxFactory;
 import ua.itea.gui.factory.GUIConnectionInfoFactory;
 import ua.itea.gui.factory.GUIIncomingConnectionDialogFactory;
-import ua.itea.model.Client;
 import ua.itea.model.ConnectionProvider;
 import ua.itea.model.ConnectionServer;
 import ua.itea.model.Server;
@@ -35,16 +35,11 @@ import ua.itea.model.ServerFactory;
 
 public class GUIApplicationImpl extends Application implements Initializable {
 	private ServerFactory serverFactory;
-	private Client client;
 	
 	private GUIIncomingConnectionDialogFactory gicdf;
 	
 	@FXML
 	private MenuItem newChannel;
-	@FXML
-	private MenuItem newConnection;
-	@FXML
-	private MenuItem acceptConnection;
 	@FXML
 	private MenuItem exit;
 	@FXML 
@@ -93,19 +88,27 @@ public class GUIApplicationImpl extends Application implements Initializable {
 							
 							dialog.setGUIChannelProvider(gcp);
 							
-							if (dialog.showAndWait().isPresent()) {
+							Optional<GUIChannel> ch = dialog.showAndWait();
+							
+							if (ch.isPresent()) {
 								c.accept();
+								GUIChannelController contr = ch.get().getController();
+								contr.setConnection(c);
 							} else {
 								c.reject();
+								try {
+									c.close();
+								} catch (IOException ex) {
+									ex.printStackTrace();
+								}
 							}
 
 						} catch (IOException e) {
 							e.printStackTrace();
-						} finally {
 							try {
 								c.close();
-							} catch (IOException e) {
-								e.printStackTrace();
+							} catch (IOException ex) {
+								ex.printStackTrace();
 							}
 						}
 					});
@@ -120,16 +123,6 @@ public class GUIApplicationImpl extends Application implements Initializable {
 				gcp.create();
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
-		});
-
-		newConnection.setOnAction(event -> {
-			if (client == null) {
-				try {
-					client.createChannel();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
 			}
 		});
 		
@@ -188,14 +181,15 @@ public class GUIApplicationImpl extends Application implements Initializable {
 		stage.setMinHeight(600);
 		stage.setMaximized(true);
 		stage.setTitle("Transmitter");
-		stage.show();
 		
-		stage.setOnCloseRequest(event->closeAllServers());
-		
-		exit.setOnAction(e->{
+		stage.setOnHidden(event->{
+			gcp.closeAll();
 			closeAllServers();
-			stage.close();
 		});
+		
+		exit.setOnAction(e->stage.close());
+		
+		stage.show();
 	}
 	
 	private void closeAllServers() {
