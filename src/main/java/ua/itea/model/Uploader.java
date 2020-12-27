@@ -39,12 +39,14 @@ public class Uploader {
 		DataAnswer dataAnswer = null;
 		
 		try {
-			for (DataFileRequest dataFileRequest : dataRequest) {
-				if (dataAnswer == null) {
-					dataAnswer = new DataAnswer();
-				}			
-				dataAnswer.add(load(dataFileRequest));
-			}	
+			if (dataRequest != null) {
+				for (DataFileRequest dataFileRequest : dataRequest) {
+					if (dataAnswer == null) {
+						dataAnswer = new DataAnswer();
+					}			
+					dataAnswer.add(load(dataFileRequest));
+				}	
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			dataAnswer = null;

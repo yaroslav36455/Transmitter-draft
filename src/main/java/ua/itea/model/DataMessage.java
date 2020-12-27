@@ -22,4 +22,8 @@ public class DataMessage implements Serializable {
 	public void setUploaderAnswer(UploaderAnswer uploaderAnswer) {
 		this.uploaderAnswer = uploaderAnswer;
 	}
+
+	public boolean isEmpty() {
+		return downloaderRequest == null && uploaderAnswer == null;
+	}
 }

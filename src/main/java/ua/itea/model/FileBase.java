@@ -44,4 +44,8 @@ public class FileBase<T extends FileHandler> implements Iterable<T>,
 	public void clear() {
 		files.clear();
 	}
+	
+	public int size() {
+		return files.size();
+	}
 }

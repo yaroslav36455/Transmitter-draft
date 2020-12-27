@@ -42,13 +42,38 @@ public class Channel {
 		new Thread(handler).start();
 	}
 	
-	public synchronized DataMessage createMessage(DataMessage incomingMessage) {
-		// incoming
-		DownloaderRequest downloaderRequest = incomingMessage.getDownloaderRequest();
-		UploaderAnswer uploaderAnswer = incomingMessage.getUploaderAnswer();
+	private DataMessage createMessage() {
+		DataMessage outgoingMessage = new DataMessage();
 		
-		DataRequest downloaderDataRequest = downloaderRequest.getDataRequest();
-		DataAnswer uloaderDataAnswer = uploaderAnswer.getDataAnswer();
+		DataRequest outgoingDataRequest = downloader.load(null);
+		DownloaderRequest outgoingDownloaderRequest = new DownloaderRequest();
+		
+		if (outgoingDataRequest != null) {
+			outgoingDownloaderRequest.setDataRequest(outgoingDataRequest);
+			outgoingMessage.setDownloaderRequest(outgoingDownloaderRequest);
+		}
+
+		return outgoingMessage;
+	}
+	
+	private DataMessage createMessage(DataMessage incomingMessage) {
+		// incoming
+		DownloaderRequest downloaderRequest = null;
+		UploaderAnswer uploaderAnswer = null;
+		
+		downloaderRequest = incomingMessage.getDownloaderRequest();
+		uploaderAnswer = incomingMessage.getUploaderAnswer();
+		
+		DataRequest downloaderDataRequest = null;
+		DataAnswer uloaderDataAnswer = null;
+		
+		if (downloaderRequest != null) {
+			downloaderDataRequest = downloaderRequest.getDataRequest();	
+		}
+		
+		if (uploaderAnswer != null) {
+			uloaderDataAnswer = uploaderAnswer.getDataAnswer();	
+		}
 		
 		// outgoing
 		DataAnswer outgoingDataAnswer = uploader.load(downloaderDataRequest);
@@ -58,13 +83,21 @@ public class Channel {
 		DownloaderRequest outgoingDownloaderRequest = new DownloaderRequest();
 		UploaderAnswer outgoingUploaderAnswer = new UploaderAnswer();
 		
-		outgoingDownloaderRequest.setDataRequest(outgoingDataRequest);
-		outgoingMessage.setDownloaderRequest(outgoingDownloaderRequest);
+		if (outgoingDataAnswer != null) {
+			outgoingUploaderAnswer.setDataAnswer(outgoingDataAnswer);
+			outgoingMessage.setUploaderAnswer(outgoingUploaderAnswer);
+		}
 		
-		outgoingUploaderAnswer.setDataAnswer(outgoingDataAnswer);
-		outgoingMessage.setUploaderAnswer(outgoingUploaderAnswer);
+		if (outgoingDataRequest != null) {
+			outgoingDownloaderRequest.setDataRequest(outgoingDataRequest);
+			outgoingMessage.setDownloaderRequest(outgoingDownloaderRequest);	
+		}
 		
 		return outgoingMessage;
+	}
+	
+	public void beginMessaging() throws InterruptedException {
+		handler.notifyForDataBeginMessage();
 	}
 	
 	public void registerNewFiles(FileBase<RemoteFile> newFiles) throws InterruptedException {
@@ -101,12 +134,12 @@ public class Channel {
 		public void run() {
 			run = true;
 			
-			try {				
+			try {
 				while (run) {
 					switch (connection.readMark()) {
-					case DATA:
+					case DATA_EXCHANGE:
 						DataMessage incomingMessage = connection.readDataMessage();
-						handler.notifyForDataMessage();
+						handler.notifyForDataExchangeMessage();
 						listenerDataMessageExchanger.exchange(incomingMessage);
 						break;
 						
@@ -146,14 +179,26 @@ public class Channel {
 		public void run() {
 			run = true;
 			
-			try {				
+			try {
 				while (run) {
 					markerSemaphore.acquire();
 					
 					switch (mark) {
-					case DATA:
+					case DATA_BEGIN:
+						DataMessage message = createMessage();
+						
+						if (!message.isEmpty()) {
+							connection.writeDataMessage(message);
+						}
+						break;
+						
+					case DATA_EXCHANGE:
 						DataMessage incomingMessage = listenerDataMessageExchanger.exchange(null);
-						connection.writeDataMessage(createMessage(incomingMessage));
+						DataMessage outgoingMessage = createMessage(incomingMessage);
+						
+						if (!outgoingMessage.isEmpty()) {
+							connection.writeDataMessage(outgoingMessage);	
+						}
 						break;
 						
 					case NEW_FILES:
@@ -184,7 +229,7 @@ public class Channel {
 				e.printStackTrace();
 			}
 		}
-		
+
 		public void stopAsReceiver() throws InterruptedException {
 			brace.acquire();
 			mark = Mark.STOP_AS_RECEIVER;
@@ -198,10 +243,17 @@ public class Channel {
 			markerSemaphore.release();
 			brace.release();
 		}
-
-		public void notifyForDataMessage() throws InterruptedException {
+		
+		public void notifyForDataExchangeMessage() throws InterruptedException {
 			brace.acquire();
-			mark = Mark.DATA;
+			mark = Mark.DATA_EXCHANGE;
+			markerSemaphore.release();
+			brace.release();
+		}
+		
+		public void notifyForDataBeginMessage() throws InterruptedException {
+			brace.acquire();
+			mark = Mark.DATA_BEGIN;
 			markerSemaphore.release();
 			brace.release();
 		}

@@ -7,17 +7,17 @@ import javafx.scene.control.TableView;
 import ua.itea.gui.GUILocalFileRow;
 import ua.itea.model.FileBase;
 import ua.itea.model.FileSize;
-import ua.itea.model.LocalFileReadable;
+import ua.itea.model.LocalFileWriteable;
 
-public class GUIUploaderFiles extends FileBase<LocalFileReadable> {
-	private static final long serialVersionUID = 7226371787777760269L;
+public class GUIDownloaderFiles extends FileBase<LocalFileWriteable> {
+	private static final long serialVersionUID = -6644542984300523435L;
 	private TableView<GUILocalFileRow> localComputer;
 	
-	public GUIUploaderFiles(TableView<GUILocalFileRow> localComputer) {
+	public GUIDownloaderFiles(TableView<GUILocalFileRow> localComputer) {
 		this.localComputer = localComputer;
 	}
 	
-	public boolean add(LocalFileReadable localFile) {
+	public boolean add(LocalFileWriteable localFile) {
 		boolean result = super.add(localFile);
 		
 		if (result) {
@@ -40,11 +40,11 @@ public class GUIUploaderFiles extends FileBase<LocalFileReadable> {
 		return result;
 	}
 	
-	public boolean addAll(FileBase<LocalFileReadable> localFiles) {
+	public boolean addAll(FileBase<LocalFileWriteable> localFiles) {
 		boolean result = true;
 		
-		for (LocalFileReadable localFileReadable : localFiles) {
-			result = result && add(localFileReadable);
+		for (LocalFileWriteable localFileWriteable : localFiles) {
+			result = result && add(localFileWriteable);
 		}
 		
 		return result;

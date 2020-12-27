@@ -54,7 +54,7 @@ public abstract class Connection implements AutoCloseable {
 	}
 	
 	public void writeDataMessage(DataMessage message) throws IOException {
-		oos.writeObject(Mark.DATA);
+		oos.writeObject(Mark.DATA_EXCHANGE);
 		oos.writeObject(message);
 	}
 	

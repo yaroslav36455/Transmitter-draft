@@ -22,5 +22,7 @@ public class DataRequest implements Serializable, Iterable<DataFileRequest> {
 		return requests.iterator();
 	}
 	
-	
+	public int size() {
+		return requests.size();
+	}
 }

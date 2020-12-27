@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
-import java.nio.channels.Channels;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -19,10 +18,11 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import javafx.stage.Window;
+import ua.itea.config.Config;
 import ua.itea.db.Contact;
 import ua.itea.gui.factory.GUIConnectionInfoFactory;
 import ua.itea.gui.factory.GUIContactDatabaseDialogFactory;
-import ua.itea.gui.modellink.ClientGUIChannelSocketFactory;
+import ua.itea.gui.modellink.GUIDownloaderFiles;
 import ua.itea.gui.modellink.GUIDownloaderRegistered;
 import ua.itea.gui.modellink.GUIUploaderFiles;
 import ua.itea.model.Channel;
@@ -31,10 +31,15 @@ import ua.itea.model.Connection;
 import ua.itea.model.ConnectionClient;
 import ua.itea.model.Downloader;
 import ua.itea.model.FileBase;
+import ua.itea.model.FileId;
+import ua.itea.model.FileTotalSize;
 import ua.itea.model.LocalFileReadable;
+import ua.itea.model.LocalFileWriteable;
 import ua.itea.model.Mark;
+import ua.itea.model.Priority;
 import ua.itea.model.RemoteFile;
 import ua.itea.model.Uploader;
+import ua.itea.model.WriteableFileInfo;
 
 public class GUIChannelController implements Initializable {
 	@FXML
@@ -64,11 +69,15 @@ public class GUIChannelController implements Initializable {
 	private Channel channel;
 	private Downloader downloader;
 	private Uploader uploader;
+	
+	private Config config;
 
-	private ClientGUIChannelSocketFactory cgcsf;
+//	private ClientGUIChannelSocketFactory cgcsf;
 //	private Client client;
 
 	public GUIChannelController() throws IOException {
+		config = new Config();
+		
 		GUIContactDatabaseDialogFactory gcddf = new GUIContactDatabaseDialogFactory();
 		contactDatabaseDialog = gcddf.create();
 
@@ -91,7 +100,7 @@ public class GUIChannelController implements Initializable {
 		uploader.setRegistered(new FileBase<>());
 		
 		downloader = new Downloader();
-		downloader.setFiles(new FileBase<>());
+		downloader.setFiles(new GUIDownloaderFiles(localComputer));
 		downloader.setRegistered(new GUIDownloaderRegistered(remoteComputer));
 		
 		channelFactory = new ChannelFactory(downloader, uploader);
@@ -197,6 +206,33 @@ public class GUIChannelController implements Initializable {
 				addressTextField.setText(contact.getAddress());
 				portTextField.setText(String.valueOf(contact.getPort()));
 				connectionInfo.getController().getName().setText(contact.getName());
+			}
+		});
+		
+		addRemoteFiles.setOnAction(event->{
+			FileBase<LocalFileWriteable> newFiles = new FileBase<>();
+			
+			for (RemoteFile registered : downloader.getRegistered()) {
+				FileId fileId = registered.getFileId();
+				File file = new File(config.getDownloadDirectory() + registered.getName());
+				FileTotalSize fileTotalSize = registered.getFileSize().getTotalSize();
+				Priority priority = new Priority(1);
+				
+				WriteableFileInfo wfi = new WriteableFileInfo(fileId, file,
+															  fileTotalSize,
+															  priority);
+				
+				try {
+					newFiles.add(new LocalFileWriteable(wfi));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			downloader.getFiles().addAll(newFiles);
+			try {
+				channel.beginMessaging();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		});
 	}
