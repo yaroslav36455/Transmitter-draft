@@ -5,6 +5,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import ua.itea.model.message.DataMessage;
+import ua.itea.model.message.Message;
+import ua.itea.model.message.NewFilesMessage;
+
 public abstract class Connection implements AutoCloseable {
 	private static final long KEY = (long) (Math.random() * Long.MAX_VALUE);
 	
@@ -86,5 +90,13 @@ public abstract class Connection implements AutoCloseable {
 	
 	public boolean isClosed() {
 		return socket.isClosed();
+	}
+	
+	public Message readMessage() throws IOException, ClassNotFoundException {
+		return (Message) ois.readObject();
+	}
+
+	public void writeMessage(Message message) throws IOException {
+		oos.writeObject(message);
 	}
 }

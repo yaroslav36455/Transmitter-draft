@@ -68,7 +68,7 @@ public class GUIIncomingConnectionDialog extends Dialog<GUIChannel> {
 
 		listViewSM.selectedIndexProperty().addListener(e -> {
 			int selected = listViewSM.getSelectedIndex();
-
+			
 			if (selected != -1) {
 				tabPaneSM.select(selected);
 			}

@@ -1,9 +1,15 @@
 package ua.itea.model;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import ua.itea.model.factory.LocalFileWriteableFactory;
+import ua.itea.model.message.DataAnswer;
+import ua.itea.model.message.DataRequest;
 
 public class Downloader {
-	private FileBase<RemoteFile> registered;
+	private LocalFileWriteableFactory localFileWriteableFactory;
 	private FileBase<LocalFileWriteable> files;
 	private LoadLimit loadLimit;
 
@@ -11,12 +17,12 @@ public class Downloader {
 		this.loadLimit = new LoadLimit(50);
 	}
 
-	public FileBase<RemoteFile> getRegistered() {
-		return registered;
+	public LocalFileWriteableFactory getLocalFileWriteableFactory() {
+		return localFileWriteableFactory;
 	}
 
-	public void setRegistered(FileBase<RemoteFile> registered) {
-		this.registered = registered;
+	public void setLocalFileWriteableFactory(LocalFileWriteableFactory localFileWriteableFactory) {
+		this.localFileWriteableFactory = localFileWriteableFactory;
 	}
 
 	public FileBase<LocalFileWriteable> getFiles() {
@@ -36,12 +42,13 @@ public class Downloader {
 	}
 
 	public DataRequest load(DataAnswer dataAnswer) {
-		DataRequest dataRequest = null;
-
+		DataRequest dataRequest = new DataRequest();
+		
 		try {
-			if (dataAnswer != null) {
-				for (DataFileAnswer dataFileAnswer : dataAnswer) {
-					LocalFileWriteable file = files.getFile(dataFileAnswer.getFileId());
+			for (DataFileAnswer dataFileAnswer : dataAnswer) {
+				LocalFileWriteable file = files.getFile(dataFileAnswer.getFileId());
+
+				if(file.isOpened()) {
 					file.write(dataFileAnswer.getDataBlock());
 				}
 			}
@@ -49,20 +56,16 @@ public class Downloader {
 			Priority totalPriority = totalPriotity();
 
 			for (LocalFileWriteable file : files) {
-				if (!file.isCompleted()) {
+				if (file.isOpened() && !file.isCompleted()) {
 					float percent = file.getPriority().percent(totalPriority);
 					int maxAllowed = (int) percent * loadLimit.getLimint();
 					DataBlockInfo dataBlockInfo = file.createRequest(maxAllowed);
 
-					if (dataRequest == null) {
-						dataRequest = new DataRequest();
-					}
 					dataRequest.add(new DataFileRequest(file.getFileId(), dataBlockInfo));
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-			dataRequest = null;
 		}
 
 		return dataRequest;
@@ -76,5 +79,21 @@ public class Downloader {
 		}
 
 		return new Priority(totalPriority);
+	}
+
+	public boolean addAll(List<RemoteFileRegistered> list) {
+		boolean added = false;
+		List<LocalFileWriteable> newFiles = new ArrayList<>();
+		
+		for (RemoteFileRegistered remoteFileRegistered : list) {
+			added |= newFiles.add(localFileWriteableFactory.create(remoteFileRegistered));
+		}
+		
+		files.addAll(newFiles);
+		return added;
+	}
+
+	public boolean removeAll(List<FileId> list) {
+		return !files.removeAll(list).isEmpty();
 	}
 }

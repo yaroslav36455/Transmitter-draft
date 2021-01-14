@@ -16,6 +16,11 @@ public class FileSize implements Serializable {
 		this.filledSize = filledSize;
 		this.totalSize = totalSize;
 	}
+	
+	public FileSize(FileTotalSize totalSize) {
+		this.filledSize = new MemorySize();
+		this.totalSize = totalSize;
+	}
 
 	public MemorySize getFilledSize() {
 		return filledSize;

@@ -5,41 +5,47 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.SelectionMode;
-import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeTableView;
 import javafx.scene.text.Text;
 import javafx.stage.Window;
 import ua.itea.config.Config;
 import ua.itea.db.Contact;
 import ua.itea.gui.factory.GUIConnectionInfoFactory;
 import ua.itea.gui.factory.GUIContactDatabaseDialogFactory;
+import ua.itea.gui.factory.GUIFileReadableTreeTableRowFactory;
+import ua.itea.gui.factory.GUIFileWriteableTreeTableRowFactory;
 import ua.itea.gui.modellink.GUIDownloaderFiles;
-import ua.itea.gui.modellink.GUIDownloaderRegistered;
 import ua.itea.gui.modellink.GUIUploaderFiles;
 import ua.itea.model.Channel;
-import ua.itea.model.ChannelFactory;
 import ua.itea.model.Connection;
 import ua.itea.model.ConnectionClient;
+import ua.itea.model.DataFileRequest;
 import ua.itea.model.Downloader;
-import ua.itea.model.FileBase;
 import ua.itea.model.FileId;
-import ua.itea.model.FileTotalSize;
-import ua.itea.model.LocalFileReadable;
+import ua.itea.model.Loader;
 import ua.itea.model.LocalFileWriteable;
 import ua.itea.model.Mark;
+import ua.itea.model.Messenger;
 import ua.itea.model.Priority;
-import ua.itea.model.RemoteFile;
 import ua.itea.model.Uploader;
-import ua.itea.model.WriteableFileInfo;
+import ua.itea.model.message.DataAnswer;
+import ua.itea.model.message.DataMessage;
+import ua.itea.model.message.DataRequest;
+import ua.itea.model.message.NewFilesMessage;
+import ua.itea.model.message.factory.DataMessageFactory;
 
 public class GUIChannelController implements Initializable {
 	@FXML
@@ -53,40 +59,26 @@ public class GUIChannelController implements Initializable {
 	@FXML
 	private Button addLocalFiles;
 	@FXML
-	private Button addRemoteFiles;
-	@FXML
 	private Button removeFiles;
 	@FXML
-	private TableView<GUILocalFileRow> localComputer;
+	private Button downloadFiles;
 	@FXML
-	private TableView<GUIRemoteFileRow> remoteComputer;
+	private TreeTableView<GUITreeTableRow> treeTable;
 
 	private GUIConnectionInfo connectionInfo;
 	private GUIContactDatabaseDialog contactDatabaseDialog;
 
-	private ChannelFactory channelFactory;
-
 	private Channel channel;
-	private Downloader downloader;
-	private Uploader uploader;
-	
 	private Config config;
-
-//	private ClientGUIChannelSocketFactory cgcsf;
-//	private Client client;
 
 	public GUIChannelController() throws IOException {
 		config = new Config();
-		
+
 		GUIContactDatabaseDialogFactory gcddf = new GUIContactDatabaseDialogFactory();
 		contactDatabaseDialog = gcddf.create();
 
 		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
 		connectionInfo = gcif.create();
-
-//		cgcsf = new ClientGUIChannelSocketFactory(connectionInfo.getController());
-//		ChannelProvider clientChannelProvider = new ChannelProvider(new ChannelBase(), new ClientChannelFactory());
-//		client = new Client(clientChannelProvider, new GUIClientSocketFactory());
 	}
 
 	public Text getName() {
@@ -95,47 +87,21 @@ public class GUIChannelController implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		uploader = new Uploader();
-		uploader.setFiles(new GUIUploaderFiles(localComputer));
-		uploader.setRegistered(new FileBase<>());
-		
-		downloader = new Downloader();
-		downloader.setFiles(new GUIDownloaderFiles(localComputer));
-		downloader.setRegistered(new GUIDownloaderRegistered(remoteComputer));
-		
-		channelFactory = new ChannelFactory(downloader, uploader);
-		
-		/***********************************************************************/
-		localComputer.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-		remoteComputer.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+		TreeItem<GUITreeTableRow> itemRoot = new TreeItem<>(new GUIEmptyTreeTableRow());
+		treeTable.setShowRoot(false);
+		treeTable.setRoot(itemRoot);
+
+		channel = createChannel(treeTable);
+
+		treeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
 		GUIFileChooserWrapper fileChooser = new GUIFileChooserWrapperCached();
 		addLocalFiles.setOnAction(event -> {
-			try {
-				Window window = addLocalFiles.getScene().getWindow();
-				List<File> files = fileChooser.getFiles(window);
+			Window window = addLocalFiles.getScene().getWindow();
 
-				if (files != null) {
-					FileBase<RemoteFile> registeredFiles = new FileBase<>();
-					FileBase<LocalFileReadable> fileBase = uploader.getFiles();
-					
-					for (File file : files) {
-						LocalFileReadable localFileReadable = new LocalFileReadable(file);
-						RemoteFile remoteFile = new RemoteFile(localFileReadable.getFileId(),
-															   localFileReadable.getFileSize(),
-															   localFileReadable.getFile().getName());
-						
-						fileBase.add(localFileReadable);
-						registeredFiles.add(remoteFile);
-					}
-					
-					uploader.getRegistered().addAll(registeredFiles);
-					if (channel != null && channel.isConnectionEstablished()) {
-						channel.registerNewFiles(registeredFiles);	
-					}
-				}
-			} catch (IOException | InterruptedException e) {
-				e.printStackTrace();
+			List<File> files = fileChooser.getFiles(window);
+			if (files != null) {
+				channel.registerFiles(files);
 			}
 		});
 
@@ -144,11 +110,11 @@ public class GUIChannelController implements Initializable {
 		connectButton.setOnAction(event -> {
 			String host = connectionInfo.getController().getAddress().getText();
 			int port = Integer.valueOf(connectionInfo.getController().getPort().getText());
-			
+
 			try {
 				Socket socket = new Socket(InetAddress.getByName(host), port);
 				ConnectionClient c = new ConnectionClient(socket);
-				
+
 				GUIConnectionInfo gci = connectionInfo;
 				Platform.runLater(() -> {
 					GUIOutgoingConnectionDialog gocd = new GUIOutgoingConnectionDialog(gci);
@@ -164,7 +130,7 @@ public class GUIChannelController implements Initializable {
 							Platform.runLater(() -> {
 								if (mark == Mark.ACCEPT) {
 									gocd.setAccept();
-									setConnection(c);
+									start(c);
 								} else { // mark == Mark.REJECT
 									gocd.setReject();
 									try {
@@ -189,13 +155,24 @@ public class GUIChannelController implements Initializable {
 				e.printStackTrace();
 			}
 		});
-		
-		removeFiles.setOnAction(event->{
-			try {
-				channel.stop();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+
+		removeFiles.setOnAction(event -> {
+//			ObservableList<GUILocalFileRow> selected = localComputer.getSelectionModel().getSelectedItems();
+//			
+//			Uploader.Registered ur = channel.getLoader().getUploader().getRegistered();
+//			Downloader.Registered dr = channel.getLoader().getDownloader().getRegistered();
+//			
+//			for (GUILocalFileRow guiLocalFileRow : selected) {	
+//				try {
+//					ur.remove
+//					ur.removeCached(guiLocalFileRow.getFileHandler().getFileId());
+//					dr.remove
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//			
+//			localComputer.getItems().removeAll(selected);
 		});
 
 		selectButton.setOnAction(event -> {
@@ -208,53 +185,100 @@ public class GUIChannelController implements Initializable {
 				connectionInfo.getController().getName().setText(contact.getName());
 			}
 		});
-		
-		addRemoteFiles.setOnAction(event->{
-			FileBase<LocalFileWriteable> newFiles = new FileBase<>();
+
+		downloadFiles.setOnAction(event -> {
+			ObservableList<TreeItem<GUITreeTableRow>> rows = treeTable.getSelectionModel().getSelectedItems();
+
+			DataMessage dataMessage = null;
+			DataRequest dataRequest = null;
 			
-			for (RemoteFile registered : downloader.getRegistered()) {
-				FileId fileId = registered.getFileId();
-				File file = new File(config.getDownloadDirectory() + registered.getName());
-				FileTotalSize fileTotalSize = registered.getFileSize().getTotalSize();
-				Priority priority = new Priority(1);
-				
-				WriteableFileInfo wfi = new WriteableFileInfo(fileId, file,
-															  fileTotalSize,
-															  priority);
-				
+			for (TreeItem<GUITreeTableRow> treeItem : rows) {
+				LocalFileWriteable file = channel.getLoader().getDownloader().getFiles()
+						.getFile(treeItem.getValue().getFileId());
 				try {
-					newFiles.add(new LocalFileWriteable(wfi));
+					file.open();
+					DataFileRequest dataFileRequest = new DataFileRequest(file.getFileId(), file.createRequest(10));
+
+					if(dataMessage == null) {
+						dataMessage = new DataMessage();
+						dataRequest = new DataRequest();
+						dataMessage.setDataAnswer(new DataAnswer());
+					}
+					dataRequest.add(dataFileRequest);
+					dataMessage.setDataRequest(dataRequest);
+					
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
-			downloader.getFiles().addAll(newFiles);
-			try {
-				channel.beginMessaging();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			
+			if (dataMessage != null) {
+				channel.getMessenger().send(dataMessage);
 			}
+			
+//			LocalFileWriteableFactory factory = new LocalFileWriteableFactory(
+//												  config.getDownloadDirectory(),
+//												  new Priority(1));
+//			ObservableList<GUIRemoteFileRow> remoteFiles = remoteComputer.getSelectionModel().getSelectedItems();
+//			List<LocalFileWriteable> addedFiles = new ArrayList<>();
+//			
+//			Downloader downloader = channel.getLoader().getDownloader();
+//			FileBase<LocalFileWriteable> files = downloader.getFiles();
+//			Downloader.Registered registered = downloader.getRegistered();
+//			
+//			for (GUIRemoteFileRow guiRemoteFileRow : remoteFiles) {
+//				RemoteFileRegistered rfr = registered.getFiles().getFile(guiRemoteFileRow.getFileId());
+//				
+//				if (rfr != null) {
+//					try {
+//						addedFiles.add(factory.create(rfr));
+//					} catch (IOException e) {
+//						e.printStackTrace();
+//					}	
+//				}
+//			}
+//			
+//			files.addAll(addedFiles);
+			// TODO начать обмен, если обмен не начат.
 		});
 	}
 
-	public void setConnection(Connection c) {
-		channel = channelFactory.create(c);
-		channel.start();
-		try {
-			channel.registerNewFiles(uploader.getRegistered());
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+	/*
+	 * local table | remote table --------------------|----------------------
+	 * uploader registered | uploader files downloader files | downloader registered
+	 */
+	private Channel createChannel(TreeTableView<GUITreeTableRow> treeTable) {
+		Channel channel = new Channel();
+		Loader loader = new Loader();
+		Uploader uploader = new Uploader();
+		Downloader downloader = new Downloader();
+
+		uploader.setRegistered(uploader.new Registered());
+		uploader.setFiles(new GUIUploaderFiles(treeTable));
+		uploader.setLocalFileReadableFactory(new GUIFileReadableTreeTableRowFactory());
+
+		downloader.setFiles(new GUIDownloaderFiles(treeTable));
+		downloader.setLocalFileWriteableFactory(
+				new GUIFileWriteableTreeTableRowFactory(config.getDownloadDirectory(), new Priority(1)));
+
+		loader.setDownloader(downloader);
+		loader.setUploader(uploader);
+		loader.setMessageFactory(new DataMessageFactory());
+
+		channel.setLoader(loader);
+		channel.setMessenger(new Messenger());
+
+		return channel;
 	}
-	
-	public void closeConnection() {
-		try {
-			if (channel != null) {
-				channel.stop();
-				channel = null;	
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+
+	public void start(Connection c) {
+		channel.getMessenger().setConnection(c);
+		channel.start();
+	}
+
+	public void close() {
+		if (channel.isRunning()) {
+			channel.stop();
 		}
 	}
 }

@@ -6,11 +6,25 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 public class LocalFileReadable extends LocalFile {
+	private static final long serialVersionUID = 1711073754387401146L;
 	private RandomAccessFile raf;
 	
-	public LocalFileReadable(File file) throws FileNotFoundException {
-		super(new FileId(), file);
-		raf = new RandomAccessFile(file, "r");
+	public LocalFileReadable(FileId fileId, File file) {
+		super(fileId, file);
+	}
+	
+	public void open() throws FileNotFoundException {
+		raf = new RandomAccessFile(getFile(), "r");
+	}
+	
+	@Override
+	public boolean isOpened() {
+		return raf != null; 
+	}
+	
+	@Override
+	public boolean isClosed() {
+		return raf == null;
 	}
 	
 	public DataBlock read(DataBlockInfo dataBlockInfo) throws IOException {
@@ -34,8 +48,8 @@ public class LocalFileReadable extends LocalFile {
 	}
 
 	@Override
-	public FileSize getFileSize() throws IOException {
-//		return new FileSize(raf.getFilePointer(), raf.length());
-		return new FileSize(raf.length(), raf.length());
+	public void close() throws IOException {
+		raf.close();
+		raf = null;
 	}
 }

@@ -1,7 +1,7 @@
 package ua.itea.model;
 
-import java.io.IOException;
 import java.io.Serializable;
+import java.util.Objects;
 
 public abstract class FileHandler implements Serializable {
 	private static final long serialVersionUID = -8540875129603292780L;
@@ -14,6 +14,24 @@ public abstract class FileHandler implements Serializable {
 	public FileId getFileId() {
 		return fileId;
 	}
-	
-	public abstract FileSize getFileSize() throws IOException;
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(fileId);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		FileHandler other = (FileHandler) obj;
+		return Objects.equals(fileId, other.fileId);
+	}
 }

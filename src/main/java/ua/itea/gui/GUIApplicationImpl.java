@@ -93,7 +93,7 @@ public class GUIApplicationImpl extends Application implements Initializable {
 							if (ch.isPresent()) {
 								c.accept();
 								GUIChannelController contr = ch.get().getController();
-								contr.setConnection(c);
+								contr.start(c);
 							} else {
 								c.reject();
 								try {

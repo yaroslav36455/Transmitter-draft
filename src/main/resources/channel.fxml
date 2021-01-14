@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ProgressBar?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TreeTableView?>
+<?import javafx.scene.control.TreeTableColumn?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.control.cell.PropertyValueFactory?>
-<?import ua.itea.gui.GUILocalFileRow?>
+<?import javafx.scene.control.cell.TreeItemPropertyValueFactory?>
 
 <VBox xmlns:fx="http://javafx.com/fxml" stylesheets="app.css">
 	<HBox>
@@ -25,89 +24,60 @@
 		<Button text="Connect" fx:id="connectButton" />
 		<Button text="Select..." fx:id="selectButton" />
 	</HBox>
-	<SplitPane DividerPositions="0.5" VBox.vgrow="ALWAYS">
-		<items>
-			<BorderPane>
-				<left>
-					<VBox>
-						<Button text="Add Local Files" fx:id="addLocalFiles" />
-						<Button text="Remove Files" fx:id="removeFiles" />
-						<Button text="Add Remote Files" fx:id="addRemoteFiles" />
-					</VBox>
-				</left>
-				<center>
-					<TableView fx:id="localComputer"
-						TableMenuButtonVisible="true">
-						<columns>
-							<TableColumn text="Name">
-								<cellValueFactory>
-									<PropertyValueFactory property="fileName" />
-								</cellValueFactory>
-							</TableColumn>
-							<TableColumn text="Path">
-								<cellValueFactory>
-									<PropertyValueFactory property="filePath" />
-								</cellValueFactory>
-							</TableColumn>
-							<TableColumn text="Size" styleClass="right-to-left">
-								<cellValueFactory>
-									<PropertyValueFactory
-										property="filledSize" />
-								</cellValueFactory>
-							</TableColumn>
-							<TableColumn text="Total" styleClass="right-to-left">
-								<cellValueFactory>
-									<PropertyValueFactory
-										property="totalFileSize" />
-								</cellValueFactory>
-							</TableColumn>
-							<TableColumn text="Progress">
-								<cellValueFactory>
-									<PropertyValueFactory
-										property="progressBar" />
-								</cellValueFactory>
-							</TableColumn>
-							<TableColumn text="Priority">
-								<cellValueFactory>
-									<PropertyValueFactory property="priority" />
-								</cellValueFactory>
-							</TableColumn>
-						</columns>
-					</TableView>
-				</center>
-			</BorderPane>
-			<BorderPane>
-				<center>
-					<TableView fx:id="remoteComputer"
-						TableMenuButtonVisible="true">
-						<columns>
-							<TableColumn text="Name">
-								<cellValueFactory>
-									<PropertyValueFactory property="fileName" />
-								</cellValueFactory>
-							</TableColumn>
-							<TableColumn text="Size" styleClass="right-to-left">
-								<cellValueFactory>
-									<PropertyValueFactory
-										property="filledSize" />
-								</cellValueFactory>
-							</TableColumn>
-							<TableColumn text="Total" styleClass="right-to-left">
-								<cellValueFactory>
-									<PropertyValueFactory
-										property="totalFileSize" />
-								</cellValueFactory>
-							</TableColumn>
-							<TableColumn text="Progress">
-								<cellValueFactory>
-									<PropertyValueFactory
-										property="progressBar" />
-								</cellValueFactory>
-							</TableColumn>
-						</columns>
-					</TableView>
-				</center>
-			</BorderPane>
-		</items>
-	</SplitPane>
+	<HBox>
+		<Button text="Add Files" fx:id="addLocalFiles" />
+		<Button text="Remove Files" fx:id="removeFiles" />
+		<Button text="Download" fx:id="downloadFiles" />
+	</HBox>
+	<TreeTableView prefHeight="9000.0"
+		TableMenuButtonVisible="true" fx:id="treeTable">
+		<columns>
+			<TreeTableColumn text="Local Computer">
+				<columns>
+					<TreeTableColumn text="Name">
+						<cellValueFactory>
+							<TreeItemPropertyValueFactory
+								property="localFileName" />
+						</cellValueFactory>
+					</TreeTableColumn>
+					<TreeTableColumn text="Path">
+						<cellValueFactory>
+							<TreeItemPropertyValueFactory
+								property="localFilePath" />
+						</cellValueFactory>
+					</TreeTableColumn>
+					<TreeTableColumn text="Size"
+						styleClass="right-to-left">
+						<cellValueFactory>
+							<TreeItemPropertyValueFactory
+								property="localFileSize" />
+						</cellValueFactory>
+					</TreeTableColumn>
+				</columns>
+			</TreeTableColumn>
+			<TreeTableColumn text="Progress">
+				<cellValueFactory>
+					<TreeItemPropertyValueFactory
+						property="progressBar" />
+				</cellValueFactory>
+			</TreeTableColumn>
+			<TreeTableColumn text="Remote Computer">
+				<columns>
+					<TreeTableColumn text="Size"
+						styleClass="right-to-left">
+						<cellValueFactory>
+							<TreeItemPropertyValueFactory
+								property="remoteFileSize" />
+						</cellValueFactory>
+					</TreeTableColumn>
+					<TreeTableColumn text="Name">
+						<cellValueFactory>
+							<TreeItemPropertyValueFactory
+								property="remoteFileName" />
+						</cellValueFactory>
+					</TreeTableColumn>
+				</columns>
+			</TreeTableColumn>
+		</columns>
+	</TreeTableView>
 </VBox>

@@ -1,57 +1,52 @@
 package ua.itea.gui.modellink;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TableView;
-import ua.itea.gui.GUILocalFileRow;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeTableView;
+import ua.itea.gui.GUIFileWriteableTreeTableRow;
+import ua.itea.gui.GUITreeTableRow;
 import ua.itea.model.FileBase;
-import ua.itea.model.FileSize;
+import ua.itea.model.FileId;
 import ua.itea.model.LocalFileWriteable;
 
 public class GUIDownloaderFiles extends FileBase<LocalFileWriteable> {
 	private static final long serialVersionUID = -6644542984300523435L;
-	private TableView<GUILocalFileRow> localComputer;
+	private TreeTableView<GUITreeTableRow> treeTable;
 	
-	public GUIDownloaderFiles(TableView<GUILocalFileRow> localComputer) {
-		this.localComputer = localComputer;
+	public GUIDownloaderFiles(TreeTableView<GUITreeTableRow> treeTable) {
+		this.treeTable = treeTable;
 	}
 	
-	public boolean add(LocalFileWriteable localFile) {
-		boolean result = super.add(localFile);
+	@Override
+	public List<LocalFileWriteable> addAll(List<LocalFileWriteable> localFiles) {
+		List<LocalFileWriteable> added = super.addAll(localFiles);
+		List<TreeItem<GUITreeTableRow>> rows = new ArrayList<>(added.size());
 		
-		if (result) {
-			
-			try {
-				FileSize fs = localFile.getFileSize();
-				String fileName = localFile.getFile().getName();
-				String filePath = localFile.getFile().getParent();
-				double progress = fs.getFilledSize().getSize() / (double) fs.getTotalSize().getSize();
-				ProgressBar progressBar = new ProgressBar(progress);
+		for (LocalFileWriteable localFileWriteable : added) {
+			rows.add(new TreeItem<>((GUIFileWriteableTreeTableRow) localFileWriteable));
+		}
+		
+		treeTable.getRoot().getChildren().addAll(rows);
+		return added;
+	}
+	
+	@Override
+	public List<LocalFileWriteable> removeAll(List<FileId> idList) {
+		List<LocalFileWriteable> removed = super.removeAll(idList);
+		
+		for (LocalFileWriteable file : removed) {
+			treeTable.getRoot().getChildren()
+				.removeIf(lfw->lfw.getValue().getFileId().get() == file.getFileId().get());	
+		}
+		
+		return removed;
+	}
 
-				GUILocalFileRow lfr = new GUILocalFileRow(fileName, filePath, fs, progressBar);
-				localComputer.getItems().add(lfr);
-			} catch (IOException e) {
-				e.printStackTrace();
-				return false;
-			}	
-		}
-		
-		return result;
-	}
-	
-	public boolean addAll(FileBase<LocalFileWriteable> localFiles) {
-		boolean result = true;
-		
-		for (LocalFileWriteable localFileWriteable : localFiles) {
-			result = result && add(localFileWriteable);
-		}
-		
-		return result;
-	}
-	
+	@Override
 	public void clear() {
 		super.clear();
-		localComputer.getItems().clear();
+		treeTable.getRoot().getChildren().clear();
 	}
 }
