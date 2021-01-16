@@ -32,19 +32,13 @@ import ua.itea.gui.modellink.GUIUploaderFiles;
 import ua.itea.model.Channel;
 import ua.itea.model.Connection;
 import ua.itea.model.ConnectionClient;
-import ua.itea.model.DataFileRequest;
 import ua.itea.model.Downloader;
 import ua.itea.model.FileId;
 import ua.itea.model.Loader;
-import ua.itea.model.LocalFileWriteable;
 import ua.itea.model.Mark;
 import ua.itea.model.Messenger;
 import ua.itea.model.Priority;
 import ua.itea.model.Uploader;
-import ua.itea.model.message.DataAnswer;
-import ua.itea.model.message.DataMessage;
-import ua.itea.model.message.DataRequest;
-import ua.itea.model.message.NewFilesMessage;
 import ua.itea.model.message.factory.DataMessageFactory;
 
 public class GUIChannelController implements Initializable {
@@ -188,65 +182,20 @@ public class GUIChannelController implements Initializable {
 
 		downloadFiles.setOnAction(event -> {
 			ObservableList<TreeItem<GUITreeTableRow>> rows = treeTable.getSelectionModel().getSelectedItems();
-
-			DataMessage dataMessage = null;
-			DataRequest dataRequest = null;
+			List<FileId> idList = new ArrayList<>();
 			
 			for (TreeItem<GUITreeTableRow> treeItem : rows) {
-				LocalFileWriteable file = channel.getLoader().getDownloader().getFiles()
-						.getFile(treeItem.getValue().getFileId());
-				try {
-					file.open();
-					DataFileRequest dataFileRequest = new DataFileRequest(file.getFileId(), file.createRequest(10));
-
-					if(dataMessage == null) {
-						dataMessage = new DataMessage();
-						dataRequest = new DataRequest();
-						dataMessage.setDataAnswer(new DataAnswer());
-					}
-					dataRequest.add(dataFileRequest);
-					dataMessage.setDataRequest(dataRequest);
-					
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				idList.add(treeItem.getValue().getFileId());
 			}
 			
-			if (dataMessage != null) {
-				channel.getMessenger().send(dataMessage);
+			try {
+				channel.beginDownloading(idList);
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-			
-//			LocalFileWriteableFactory factory = new LocalFileWriteableFactory(
-//												  config.getDownloadDirectory(),
-//												  new Priority(1));
-//			ObservableList<GUIRemoteFileRow> remoteFiles = remoteComputer.getSelectionModel().getSelectedItems();
-//			List<LocalFileWriteable> addedFiles = new ArrayList<>();
-//			
-//			Downloader downloader = channel.getLoader().getDownloader();
-//			FileBase<LocalFileWriteable> files = downloader.getFiles();
-//			Downloader.Registered registered = downloader.getRegistered();
-//			
-//			for (GUIRemoteFileRow guiRemoteFileRow : remoteFiles) {
-//				RemoteFileRegistered rfr = registered.getFiles().getFile(guiRemoteFileRow.getFileId());
-//				
-//				if (rfr != null) {
-//					try {
-//						addedFiles.add(factory.create(rfr));
-//					} catch (IOException e) {
-//						e.printStackTrace();
-//					}	
-//				}
-//			}
-//			
-//			files.addAll(addedFiles);
-			// TODO начать обмен, если обмен не начат.
 		});
 	}
 
-	/*
-	 * local table | remote table --------------------|----------------------
-	 * uploader registered | uploader files downloader files | downloader registered
-	 */
 	private Channel createChannel(TreeTableView<GUITreeTableRow> treeTable) {
 		Channel channel = new Channel();
 		Loader loader = new Loader();
@@ -254,9 +203,11 @@ public class GUIChannelController implements Initializable {
 		Downloader downloader = new Downloader();
 
 		uploader.setRegistered(uploader.new Registered());
+		uploader.setLoadLimit(config.getUploadLimit());
 		uploader.setFiles(new GUIUploaderFiles(treeTable));
 		uploader.setLocalFileReadableFactory(new GUIFileReadableTreeTableRowFactory());
 
+		downloader.setLoadLimit(config.getDownloadLimit());
 		downloader.setFiles(new GUIDownloaderFiles(treeTable));
 		downloader.setLocalFileWriteableFactory(
 				new GUIFileWriteableTreeTableRowFactory(config.getDownloadDirectory(), new Priority(1)));

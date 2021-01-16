@@ -86,10 +86,19 @@ public class Loader {
 	}
 
 	private DataMessage process(DataMessage incomingMessage) {
-		//TODO split every load into two different methods
+		if(incomingMessage.getDataAnswer() != null) {
+			downloader.save(incomingMessage.getDataAnswer());	
+		}
+		return createMessage(incomingMessage);
+	}
+	
+	private DataMessage createMessage(DataMessage incomingMessage) {
 		DataMessage message = messageFactory.create();
-		DataRequest request = downloader.load(incomingMessage.getDataAnswer());
-		DataAnswer answer =  uploader.load(incomingMessage.getDataRequest());
+		DataRequest request = downloader.createRequest();
+		DataAnswer answer = null;
+		if(incomingMessage.getDataRequest() != null) {
+			answer = uploader.load(incomingMessage.getDataRequest());	
+		}
 		
 		message.setDataAnswer(answer);
 		message.setDataRequest(request);

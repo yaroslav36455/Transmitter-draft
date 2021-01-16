@@ -20,6 +20,6 @@ public class Priority {
 	}
 	
 	public float percent(Priority totalPriority) {
-		return priority * 100.f / totalPriority.priority;
+		return priority * 1.f / totalPriority.priority;
 	}
 }

@@ -1,11 +1,14 @@
 package ua.itea.model;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import ua.itea.model.factory.LocalFileReadableFactory;
 import ua.itea.model.factory.RemoteFileRegisteredFactory;
 import ua.itea.model.message.AutoBlockingQueue;
+import ua.itea.model.message.DataAnswer;
+import ua.itea.model.message.DataMessage;
 import ua.itea.model.message.DistributorIncoming;
 import ua.itea.model.message.Message;
 import ua.itea.model.message.factory.NewFilesMessageFactory;
@@ -18,7 +21,7 @@ public class Channel {
 	private AutoBlockingQueue<Message> incomingQueue;
 	private AutoBlockingQueue<Message> outgoingQueue;
 	
-	private boolean run; 
+	private volatile boolean run; 
 	
 	public Channel() {
 		incomingQueue = new AutoBlockingQueue<>();
@@ -76,15 +79,26 @@ public class Channel {
 		run = false;
 	}
 	
-	public boolean isRunning() {
+	public synchronized boolean isRunning() {
 		return run;
 	}
 
 	public synchronized void registerFiles(List<File> files) {		
-		 getLoader().getUploader().addAll(files);
+		getLoader().getUploader().addAll(files);
 		
 		if (messenger.isConnectionEstablished()) {
 			getLoader().getUploader().getRegistered().updateRemote();
 		}
+	}
+	
+	public synchronized void beginDownloading(List<FileId> idList) throws IOException {
+		DataMessage dataMessage = new DataMessage();
+		
+		for (FileId fileId : idList) {
+			loader.getDownloader().getFiles().getFile(fileId).open();
+		}
+		
+		dataMessage.setDataRequest(loader.getDownloader().createRequest());
+		messenger.send(dataMessage);
 	}
 }

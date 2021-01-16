@@ -24,10 +24,6 @@ public class Uploader {
 	private FileBase<LocalFileReadable> files;
 	private LoadLimit loadLimit;
 	private LocalFileReadableFactory localFileReadableFactory;
-
-	public Uploader() {
-		this.loadLimit = new LoadLimit(50);
-	}
 	
 	public LocalFileReadableFactory getLocalFileReadableFactory() {
 		return localFileReadableFactory;
@@ -81,7 +77,7 @@ public class Uploader {
 			e.printStackTrace();
 		}
 
-		return dataAnswer;
+		return dataAnswer.isEmpty() ? null : dataAnswer;
 	}
 	
 	public List<LocalFileReadable> addAll(List<File> list) {

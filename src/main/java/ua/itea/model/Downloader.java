@@ -13,10 +13,6 @@ public class Downloader {
 	private FileBase<LocalFileWriteable> files;
 	private LoadLimit loadLimit;
 
-	public Downloader() {
-		this.loadLimit = new LoadLimit(50);
-	}
-
 	public LocalFileWriteableFactory getLocalFileWriteableFactory() {
 		return localFileWriteableFactory;
 	}
@@ -41,34 +37,41 @@ public class Downloader {
 		this.loadLimit = downloadLimit;
 	}
 
-	public DataRequest load(DataAnswer dataAnswer) {
-		DataRequest dataRequest = new DataRequest();
-		
+	public void save(DataAnswer dataAnswer) {
 		try {
 			for (DataFileAnswer dataFileAnswer : dataAnswer) {
 				LocalFileWriteable file = files.getFile(dataFileAnswer.getFileId());
 
-				if(file.isOpened()) {
+				if (file.isOpened()) {
 					file.write(dataFileAnswer.getDataBlock());
 				}
 			}
-
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public DataRequest createRequest() {
+		DataRequest dataRequest = new DataRequest();
+		
+		try {
 			Priority totalPriority = totalPriotity();
 
 			for (LocalFileWriteable file : files) {
 				if (file.isOpened() && !file.isCompleted()) {
 					float percent = file.getPriority().percent(totalPriority);
 					int maxAllowed = (int) percent * loadLimit.getLimint();
+
 					DataBlockInfo dataBlockInfo = file.createRequest(maxAllowed);
 
 					dataRequest.add(new DataFileRequest(file.getFileId(), dataBlockInfo));
 				}
-			}
+			}	
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		return dataRequest;
+		
+		return dataRequest.isEmpty() ? null : dataRequest;
 	}
 
 	private Priority totalPriotity() {
@@ -84,11 +87,11 @@ public class Downloader {
 	public boolean addAll(List<RemoteFileRegistered> list) {
 		boolean added = false;
 		List<LocalFileWriteable> newFiles = new ArrayList<>();
-		
+
 		for (RemoteFileRegistered remoteFileRegistered : list) {
 			added |= newFiles.add(localFileWriteableFactory.create(remoteFileRegistered));
 		}
-		
+
 		files.addAll(newFiles);
 		return added;
 	}
