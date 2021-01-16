@@ -4,10 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import ua.itea.model.factory.LocalFileReadableFactory;
 import ua.itea.model.factory.RemoteFileRegisteredFactory;
 import ua.itea.model.message.AutoBlockingQueue;
-import ua.itea.model.message.DataAnswer;
 import ua.itea.model.message.DataMessage;
 import ua.itea.model.message.DistributorIncoming;
 import ua.itea.model.message.Message;
@@ -70,13 +68,16 @@ public class Channel {
 	
 	public synchronized void stop() {
 		messenger.stop();
+	}
+	
+	public void stopChannel() {
 		distributorIncoming.stop();
 		loader.stop();
 		
 		Uploader.Registered registered = getLoader().getUploader().getRegistered();
 		registered.resetRemote();
 		
-		run = false;
+		run = false;		
 	}
 	
 	public synchronized boolean isRunning() {

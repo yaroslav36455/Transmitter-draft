@@ -12,6 +12,7 @@ public class Messenger {
 	private AutoBlockingQueue<Message> incomingQueue;
 	private AutoBlockingQueue<Message> outgoingQueue;
 	private Connection connection;
+	private Runnable closeConnectionCallback;
 	
 	public Connection getConnection() {
 		return connection;
@@ -35,6 +36,14 @@ public class Messenger {
 
 	public void setOutgoingQueue(AutoBlockingQueue<Message> outgoingQueue) {
 		this.outgoingQueue = outgoingQueue;
+	}
+
+	public Runnable getCloseConnectionCallback() {
+		return closeConnectionCallback;
+	}
+
+	public void setCloseConnectionCallback(Runnable closeConnectionCallback) {
+		this.closeConnectionCallback = closeConnectionCallback;
 	}
 
 	private void listener() {
@@ -113,6 +122,7 @@ public class Messenger {
 	private void closeConnection() {
 		try {
 			connection.close();
+			closeConnectionCallback.run();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

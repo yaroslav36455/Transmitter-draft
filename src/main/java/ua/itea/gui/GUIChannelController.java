@@ -51,6 +51,8 @@ public class GUIChannelController implements Initializable {
 	@FXML
 	private Button selectButton;
 	@FXML
+	private Button disconnectButton;
+	@FXML
 	private Button addLocalFiles;
 	@FXML
 	private Button removeFiles;
@@ -179,6 +181,9 @@ public class GUIChannelController implements Initializable {
 				connectionInfo.getController().getName().setText(contact.getName());
 			}
 		});
+		
+		disconnectButton.setDisable(true);
+		disconnectButton.setOnAction(event->close());
 
 		downloadFiles.setOnAction(event -> {
 			ObservableList<TreeItem<GUITreeTableRow>> rows = treeTable.getSelectionModel().getSelectedItems();
@@ -218,6 +223,10 @@ public class GUIChannelController implements Initializable {
 
 		channel.setLoader(loader);
 		channel.setMessenger(new Messenger());
+		channel.getMessenger().setCloseConnectionCallback(()->{
+			channel.stopChannel();
+			closeConnectionGUI();
+		});
 
 		return channel;
 	}
@@ -225,11 +234,33 @@ public class GUIChannelController implements Initializable {
 	public void start(Connection c) {
 		channel.getMessenger().setConnection(c);
 		channel.start();
+		
+		addressTextField.setText(c.getSocket().getInetAddress().toString());
+		portTextField.setText(String.valueOf(c.getSocket().getPort()));
+		
+		startConnectionGUI();
 	}
-
+	
 	public void close() {
 		if (channel.isRunning()) {
 			channel.stop();
+			closeConnectionGUI();
 		}
+	}
+	
+	public void startConnectionGUI() {
+		addressTextField.setEditable(false);
+		portTextField.setEditable(false);
+		selectButton.setDisable(true);
+		connectButton.setDisable(true);
+		disconnectButton.setDisable(false);
+	}
+	
+	public void closeConnectionGUI() {
+		addressTextField.setEditable(true);
+		portTextField.setEditable(true);
+		selectButton.setDisable(false);
+		connectButton.setDisable(false);
+		disconnectButton.setDisable(true);
 	}
 }

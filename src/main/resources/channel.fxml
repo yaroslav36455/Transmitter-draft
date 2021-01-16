@@ -21,8 +21,9 @@
 		</VBox>
 		<TextField styleClass="port" promptText="port"
 			fx:id="portTextField" />
-		<Button text="Connect" fx:id="connectButton" />
 		<Button text="Select..." fx:id="selectButton" />
+		<Button text="Connect" fx:id="connectButton" />
+		<Button text="Disconnect" fx:id="disconnectButton" />
 	</HBox>
 	<HBox>
 		<Button text="Add Files" fx:id="addLocalFiles" />
