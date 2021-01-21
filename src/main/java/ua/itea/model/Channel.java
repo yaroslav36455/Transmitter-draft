@@ -1,105 +1,82 @@
 package ua.itea.model;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import ua.itea.model.factory.RemoteFileRegisteredFactory;
 import ua.itea.model.message.AutoBlockingQueue;
-import ua.itea.model.message.DataMessage;
-import ua.itea.model.message.DistributorIncoming;
-import ua.itea.model.message.Message;
+import ua.itea.model.message.LoaderMessage;
 import ua.itea.model.message.factory.NewFilesMessageFactory;
 import ua.itea.model.message.factory.RemoveFilesMessageFactory;
 
 public class Channel {
-	private Loader loader;
-	private Messenger messenger;
-	private DistributorIncoming distributorIncoming;
-	private AutoBlockingQueue<Message> incomingQueue;
-	private AutoBlockingQueue<Message> outgoingQueue;
+	private boolean run;
+	private Downloader downloader;
+	private Uploader uploader;
+	private AutoBlockingQueue<LoaderMessage> incoming;
+	private Thread thread;
 	
-	private volatile boolean run; 
-	
-	public Channel() {
-		incomingQueue = new AutoBlockingQueue<>();
-		outgoingQueue = new AutoBlockingQueue<>();
-		
-		distributorIncoming = new DistributorIncoming();
-		distributorIncoming.setIncomingQueue(incomingQueue);
-		distributorIncoming.setLoaderQueue(new AutoBlockingQueue<>());
+	public synchronized void registerFiles(List<File> files, Messenger messenger) {		
+		uploader.addAll(files);
+		uploader.updateRemote(messenger);
 	}
 
-	public Loader getLoader() {
-		return loader;
+	public Downloader getDownloader() {
+		return downloader;
 	}
 
-	public void setLoader(Loader loader) {
-		this.loader = loader;
-		this.loader.setIncoming(distributorIncoming.getLoaderQueue());
-		this.loader.setOutgoing(outgoingQueue);
+	public void setDownloader(Downloader downloader) {
+		this.downloader = downloader;
+	}
+
+	public Uploader getUploader() {
+		return uploader;
+	}
+
+	public void setUploader(Uploader uploader) {
+		this.uploader = uploader;
 		
-		Uploader.Registered ur = this.loader.getUploader().getRegistered();
+		Uploader.Registered ur = uploader.getRegistered();
 		ur.setNewFilesMessageFactory(new NewFilesMessageFactory());
 		ur.setRemoveFilesMessageFactory(new RemoveFilesMessageFactory());
 		ur.setRemoteFileRegisteredFactory(new RemoteFileRegisteredFactory());
 	}
-	
-	public Messenger getMessenger() {
-		return messenger;
-	}
-	
-	public void setMessenger(Messenger messenger) {
-		this.messenger = messenger;
-		this.messenger.setIncomingQueue(incomingQueue);
-		this.messenger.setOutgoingQueue(outgoingQueue);
-	}
-	
-	public synchronized void start() {
-		loader.start();
-		distributorIncoming.start();
-		messenger.start();
-		
-		Uploader.Registered registered = getLoader().getUploader().getRegistered();
-		registered.updateRemote();
-		
-		run = true;
-	}
-	
-	public synchronized void stop() {
-		messenger.stop();
-	}
-	
-	public void stopChannel() {
-		distributorIncoming.stop();
-		loader.stop();
-		
-		Uploader.Registered registered = getLoader().getUploader().getRegistered();
-		registered.resetRemote();
-		
-		run = false;		
-	}
-	
-	public synchronized boolean isRunning() {
-		return run;
+
+	public AutoBlockingQueue<LoaderMessage> getIncoming() {
+		return incoming;
 	}
 
-	public synchronized void registerFiles(List<File> files) {		
-		getLoader().getUploader().addAll(files);
-		
-		if (messenger.isConnectionEstablished()) {
-			getLoader().getUploader().getRegistered().updateRemote();
+	public void setIncoming(AutoBlockingQueue<LoaderMessage> incoming) {
+		this.incoming = incoming;
+	}
+
+	private void loop() {
+		run = true;
+
+		try {
+			while (run) {
+				LoaderMessage incomingMessage = incoming.poll();
+				incomingMessage.execute(this);
+			}
+		} catch (InterruptedException e) {
+//			e.printStackTrace();
 		}
 	}
-	
-	public synchronized void beginDownloading(List<FileId> idList) throws IOException {
-		DataMessage dataMessage = new DataMessage();
-		
-		for (FileId fileId : idList) {
-			loader.getDownloader().getFiles().getFile(fileId).open();
+
+	public synchronized void start(Messenger messenger) {
+		thread = new Thread(this::loop);
+		thread.start();
+
+		uploader.start(messenger);
+	}
+
+	public synchronized void stop() {
+		if (thread != null) {
+			thread.interrupt();
+			thread = null;
+
+			uploader.stop();
+			downloader.stop();
 		}
-		
-		dataMessage.setDataRequest(loader.getDownloader().createRequest());
-		messenger.send(dataMessage);
 	}
 }

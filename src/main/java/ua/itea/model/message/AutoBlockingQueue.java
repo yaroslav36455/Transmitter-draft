@@ -4,7 +4,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Semaphore;
 
-public class AutoBlockingQueue<T extends Message> {
+public class AutoBlockingQueue<T> {
 	private Semaphore semaphore;
 	private Queue<T> messageQueue;
 	

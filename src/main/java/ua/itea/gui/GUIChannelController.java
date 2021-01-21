@@ -34,12 +34,12 @@ import ua.itea.model.Connection;
 import ua.itea.model.ConnectionClient;
 import ua.itea.model.Downloader;
 import ua.itea.model.FileId;
-import ua.itea.model.Loader;
 import ua.itea.model.Mark;
 import ua.itea.model.Messenger;
 import ua.itea.model.Priority;
 import ua.itea.model.Uploader;
-import ua.itea.model.message.factory.DataMessageFactory;
+import ua.itea.model.Uploader.Registered;
+import ua.itea.model.message.AutoBlockingQueue;
 
 public class GUIChannelController implements Initializable {
 	@FXML
@@ -64,6 +64,7 @@ public class GUIChannelController implements Initializable {
 	private GUIConnectionInfo connectionInfo;
 	private GUIContactDatabaseDialog contactDatabaseDialog;
 
+	private Messenger messenger;
 	private Channel channel;
 	private Config config;
 
@@ -88,6 +89,7 @@ public class GUIChannelController implements Initializable {
 		treeTable.setRoot(itemRoot);
 
 		channel = createChannel(treeTable);
+		messenger = createMessenger(channel);
 
 		treeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
@@ -97,7 +99,7 @@ public class GUIChannelController implements Initializable {
 
 			List<File> files = fileChooser.getFiles(window);
 			if (files != null) {
-				channel.registerFiles(files);
+				channel.registerFiles(files, messenger);
 			}
 		});
 
@@ -194,20 +196,28 @@ public class GUIChannelController implements Initializable {
 			}
 			
 			try {
-				channel.beginDownloading(idList);
+				channel.getDownloader().beginDownloading(idList);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		});
 	}
 
+	private Messenger createMessenger(Channel channel) {
+		Messenger messenger = new Messenger();
+		messenger.setChannel(channel);
+		messenger.setBeginMessaging(this::startConnectionGUI);
+		messenger.setEndMessaging(this::closeConnectionGUI);
+		
+		return messenger;
+	}
+
 	private Channel createChannel(TreeTableView<GUITreeTableRow> treeTable) {
 		Channel channel = new Channel();
-		Loader loader = new Loader();
 		Uploader uploader = new Uploader();
 		Downloader downloader = new Downloader();
 
-		uploader.setRegistered(uploader.new Registered());
+		uploader.setRegistered(new Registered());
 		uploader.setLoadLimit(config.getUploadLimit());
 		uploader.setFiles(new GUIUploaderFiles(treeTable));
 		uploader.setLocalFileReadableFactory(new GUIFileReadableTreeTableRowFactory());
@@ -215,40 +225,29 @@ public class GUIChannelController implements Initializable {
 		downloader.setLoadLimit(config.getDownloadLimit());
 		downloader.setFiles(new GUIDownloaderFiles(treeTable));
 		downloader.setLocalFileWriteableFactory(
-				new GUIFileWriteableTreeTableRowFactory(config.getDownloadDirectory(), new Priority(1)));
+				new GUIFileWriteableTreeTableRowFactory(config.getDownloadDirectory(),
+														new Priority(1)));
 
-		loader.setDownloader(downloader);
-		loader.setUploader(uploader);
-		loader.setMessageFactory(new DataMessageFactory());
-
-		channel.setLoader(loader);
-		channel.setMessenger(new Messenger());
-		channel.getMessenger().setCloseConnectionCallback(()->{
-			channel.stopChannel();
-			closeConnectionGUI();
-		});
-
+		channel.setDownloader(downloader);
+		channel.setUploader(uploader);
+		channel.setIncoming(new AutoBlockingQueue<>());
+		
 		return channel;
 	}
 
-	public void start(Connection c) {
-		channel.getMessenger().setConnection(c);
-		channel.start();
+	public synchronized void start(Connection c) {
+		messenger.setConnection(c);
+		messenger.start();
 		
 		addressTextField.setText(c.getSocket().getInetAddress().toString());
 		portTextField.setText(String.valueOf(c.getSocket().getPort()));
-		
-		startConnectionGUI();
 	}
 	
-	public void close() {
-		if (channel.isRunning()) {
-			channel.stop();
-			closeConnectionGUI();
-		}
+	public synchronized void close() {
+		messenger.stop();
 	}
 	
-	public void startConnectionGUI() {
+	private void startConnectionGUI() {
 		addressTextField.setEditable(false);
 		portTextField.setEditable(false);
 		selectButton.setDisable(true);
@@ -256,7 +255,7 @@ public class GUIChannelController implements Initializable {
 		disconnectButton.setDisable(false);
 	}
 	
-	public void closeConnectionGUI() {
+	private void closeConnectionGUI() {
 		addressTextField.setEditable(true);
 		portTextField.setEditable(true);
 		selectButton.setDisable(false);

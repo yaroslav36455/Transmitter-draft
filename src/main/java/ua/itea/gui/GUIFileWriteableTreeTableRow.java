@@ -6,7 +6,6 @@ import java.io.IOException;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.control.ProgressBar;
 import ua.itea.gui.modellink.MemorySizeUpdateable;
-import ua.itea.model.DataBlock;
 import ua.itea.model.FileId;
 import ua.itea.model.LocalFileWriteable;
 import ua.itea.model.MemorySize;

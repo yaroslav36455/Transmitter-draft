@@ -3,17 +3,52 @@ package ua.itea.model;
 import java.io.IOException;
 
 import ua.itea.model.message.AutoBlockingQueue;
+import ua.itea.model.message.LoaderMessage;
 import ua.itea.model.message.Message;
-import ua.itea.model.message.StopMessage;
 
 public class Messenger {
 	private Thread threadListener;
 	private Thread threadSpeaker;
-	private AutoBlockingQueue<Message> incomingQueue;
-	private AutoBlockingQueue<Message> outgoingQueue;
-	private Connection connection;
-	private Runnable closeConnectionCallback;
+	private boolean runListener;
+	private boolean runSpeaker;
 	
+	private Runnable beginMessaging;
+	private Runnable endMessaging;
+	
+	private AutoBlockingQueue<Message> outgoing;
+	private Connection connection;
+	private Channel channel;
+	
+	public Messenger() {
+		outgoing = new AutoBlockingQueue<>();
+		beginMessaging = ()->{};
+		endMessaging = ()->{};
+	}
+	
+	public Runnable getBeginMessaging() {
+		return beginMessaging;
+	}
+
+	public void setBeginMessaging(Runnable beginMessaging) {
+		this.beginMessaging = beginMessaging;
+	}
+
+	public Runnable getEndMessaging() {
+		return endMessaging;
+	}
+
+	public void setEndMessaging(Runnable endMessaging) {
+		this.endMessaging = endMessaging;
+	}
+
+	public Channel getChannel() {
+		return channel;
+	}
+
+	public void setChannel(Channel channel) {
+		this.channel = channel;
+	}
+
 	public Connection getConnection() {
 		return connection;
 	}
@@ -22,45 +57,21 @@ public class Messenger {
 		this.connection = connection;
 	}
 
-	public AutoBlockingQueue<Message> getIncomingQueue() {
-		return incomingQueue;
+	public AutoBlockingQueue<Message> getOutgoing() {
+		return outgoing;
 	}
 
-	public void setIncomingQueue(AutoBlockingQueue<Message> incomingQueue) {
-		this.incomingQueue = incomingQueue;
+	public void setOutgoing(AutoBlockingQueue<Message> outgoingQueue) {
+		this.outgoing = outgoingQueue;
 	}
-
-	public AutoBlockingQueue<Message> getOutgoingQueue() {
-		return outgoingQueue;
-	}
-
-	public void setOutgoingQueue(AutoBlockingQueue<Message> outgoingQueue) {
-		this.outgoingQueue = outgoingQueue;
-	}
-
-	public Runnable getCloseConnectionCallback() {
-		return closeConnectionCallback;
-	}
-
-	public void setCloseConnectionCallback(Runnable closeConnectionCallback) {
-		this.closeConnectionCallback = closeConnectionCallback;
-	}
-
+	
 	private void listener() {
 		
 		try {
-			Message message = null;
-			
-			do {
-				message = connection.readMessage();
-				incomingQueue.add(message);
-			} while(!(message instanceof StopMessage));
-			
-			StopMessage stopMessage = (StopMessage) message;
-			if (stopMessage.isReceiver(this)) {
-				stop(stopMessage);
-			} else {
-				closeConnection();
+			runListener = true;
+			while(runListener) {
+				Message message = connection.readMessage();
+				message.execute(this);
 			}
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
@@ -70,65 +81,115 @@ public class Messenger {
 	private void speaker() {
 		
 		try {
-			Message message = null;
-			
-			do {
-				message = outgoingQueue.poll();
+			runSpeaker = true;
+			while(runSpeaker) {
+				Message message = outgoing.poll();
 				connection.writeMessage(message);
-			} while(!(message instanceof StopMessage));
-			
-			StopMessage stopMessage = (StopMessage) message;
-			if (stopMessage.isReceiver(this)) {
-				closeConnection();
 			}
-			
 		} catch(IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
 
 	public synchronized void start() {
-		try {
-			if (threadSpeaker != null && threadSpeaker.isAlive()) {
-				threadSpeaker.join();
-			}
-			
-			if (threadListener != null && threadListener.isAlive()) {
-				threadListener.join();
-			}
-			
-			threadListener = new Thread(this::listener, "Listener");
-			threadSpeaker = new Thread(this::speaker, "Speaker");
-			
-			threadListener.start();
-			threadSpeaker.start();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public synchronized void stop() {
-		stop(new StopMessage(this));
+		threadListener = new Thread(this::listener, "Listener");
+		threadSpeaker = new Thread(this::speaker, "Speaker");
+		
+		threadListener.start();
+		threadSpeaker.start();
+		
+		channel.start(this);
+		
+		beginMessaging.run();
 	}
 	
-	private void stop(StopMessage stopMessage) {
-		outgoingQueue.add(stopMessage);
+	public synchronized void stop() {
+		send(new StopMessage(this));
+		stopSpeaker();
+	}
+	
+	private void stopListener() {
+		this.runListener = false;
+	}
+	
+	private void stopSpeaker() {
+		this.runSpeaker = false;
+	}
+	
+	private synchronized void stopEventually() {
+		// call from listener thread only
+		
+		try {				
+			threadSpeaker.join();
+			connection.close();
+//			System.out.println("stop connection");
+			endMessaging.run();
+		} catch (InterruptedException | IOException e) {
+			e.printStackTrace();
+		} finally {
+			channel.stop();
+			threadListener = null;
+			threadSpeaker = null;
+		}
 	}
 	
 	public synchronized boolean isConnectionEstablished() {
 		return connection != null && !connection.isClosed();
 	}
 	
-	private void closeConnection() {
-		try {
-			connection.close();
-			closeConnectionCallback.run();
-		} catch (IOException e) {
-			e.printStackTrace();
+	public void send(Message message) {
+		outgoing.add(message);
+	}
+	
+	public void send(LoaderMessage message) {
+		outgoing.add(new LoaderMessageWrapper(message));
+	}
+	
+	
+	private static class StopMessage implements Message {
+		private static final long serialVersionUID = -5579245300376539762L;
+		private int messengerHashCode;
+		
+		public StopMessage(Messenger messenger) {
+			this.messengerHashCode = messenger.hashCode();
+		}
+		
+		private boolean isRequester(Messenger messenger) {
+			return this.messengerHashCode == messenger.hashCode();
+		}
+		
+		private boolean isReceiver(Messenger messenger) {
+			return !isRequester(messenger);
+		}
+
+		@Override
+		public void execute(Messenger messenger) {
+			if(isReceiver(messenger)) {
+				// stop receiver
+				messenger.send(this);
+				messenger.stopSpeaker();
+				messenger.stopListener();
+			} else if(isRequester(messenger)) {
+				// stop requester
+				messenger.stopListener();
+			}
+			
+			messenger.stopEventually();
 		}
 	}
 	
-	public void send(Message message) {
-		outgoingQueue.add(message);
+	private static class LoaderMessageWrapper implements Message {
+		private static final long serialVersionUID = 2636770593396458480L;
+		private LoaderMessage loaderMessage;
+		
+		public LoaderMessageWrapper(LoaderMessage loaderMessage) {
+			this.loaderMessage = loaderMessage;
+		}
+
+		@Override
+		public void execute(Messenger messenger) {
+			loaderMessage.setMessenger(messenger);
+			messenger.channel.getIncoming().add(loaderMessage);
+		}
 	}
 }

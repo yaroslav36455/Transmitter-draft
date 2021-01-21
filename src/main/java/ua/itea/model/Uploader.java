@@ -10,10 +10,6 @@ import java.util.TreeSet;
 
 import ua.itea.model.factory.LocalFileReadableFactory;
 import ua.itea.model.factory.RemoteFileRegisteredFactory;
-import ua.itea.model.message.AutoBlockingQueue;
-import ua.itea.model.message.DataAnswer;
-import ua.itea.model.message.DataRequest;
-import ua.itea.model.message.Message;
 import ua.itea.model.message.NewFilesMessage;
 import ua.itea.model.message.RemoveFilesMessage;
 import ua.itea.model.message.factory.NewFilesMessageFactory;
@@ -22,9 +18,10 @@ import ua.itea.model.message.factory.RemoveFilesMessageFactory;
 public class Uploader {
 	private Registered registered;
 	private FileBase<LocalFileReadable> files;
-	private LoadLimit loadLimit;
+	private LoadLimit uploadLimit;
+	private LoadLimit remoteDownloadLimit;
 	private LocalFileReadableFactory localFileReadableFactory;
-	
+
 	public LocalFileReadableFactory getLocalFileReadableFactory() {
 		return localFileReadableFactory;
 	}
@@ -50,68 +47,84 @@ public class Uploader {
 	}
 
 	public LoadLimit getLoadLimit() {
-		return loadLimit;
+		return uploadLimit;
 	}
 
 	public void setLoadLimit(LoadLimit loadLimit) {
-		this.loadLimit = loadLimit;
+		this.uploadLimit = loadLimit;
 	}
 
-	public DataAnswer load(DataRequest dataRequest) {
-		DataAnswer dataAnswer = new DataAnswer();
+	public List<DataFileAnswer> load(List<DataFileRequest> dataRequests) {
+		List<DataFileAnswer> dataAnswers = new ArrayList<>();
 
 		try {
-			for (DataFileRequest dataFileRequest : dataRequest) {
+			for (DataFileRequest dataFileRequest : dataRequests) {
 				LocalFileReadable file = files.getFile(dataFileRequest.getFileId());
-				
-				if(file != null) {
-					if(!file.isOpened()) {
+
+				if (file != null) {
+					if (!file.isOpened()) {
 						file.open();
 					}
-					
+
 					DataBlock dataBlock = file.read(dataFileRequest.getDataBlockInfo());
-					dataAnswer.add(new DataFileAnswer(dataFileRequest.getFileId(), dataBlock));
+					dataAnswers.add(new DataFileAnswer(dataFileRequest.getFileId(), dataBlock));
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-		return dataAnswer.isEmpty() ? null : dataAnswer;
+		return dataAnswers.isEmpty() ? null : dataAnswers;
 	}
-	
+
 	public List<LocalFileReadable> addAll(List<File> list) {
 		List<LocalFileReadable> newFiles = new ArrayList<>();
-		
+
 		for (File file : list) {
 			newFiles.add(localFileReadableFactory.create(file));
 		}
 
 		return files.addAll(newFiles);
 	}
-	
+
 	public List<LocalFileReadable> removeAll(List<FileId> list) {
 		return files.removeAll(list);
 	}
 
-	public class Registered {
+	public void start(Messenger messenger) {
+		updateRemote(messenger);
+	}
+
+	public void stop() {
+		registered.resetRemote();
+		closeAll();
+	}
+
+	public void updateRemote(Messenger messenger) {
+		registered.updateRemote(messenger, this);
+	}
+
+	private void closeAll() {
+		for (LocalFileReadable localFileReadable : files) {
+			try {
+				if (localFileReadable.isOpened()) {
+					localFileReadable.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public static class Registered {
 		private Set<FileId> registeredRemote;
 
-		private AutoBlockingQueue<Message> outgoing;
 		private RemoteFileRegisteredFactory remoteFileRegisteredFactory;
 		private NewFilesMessageFactory newFilesMessageFactory;
 		private RemoveFilesMessageFactory removeFilesMessageFactory;
 
 		public Registered() {
-			this.registeredRemote = new TreeSet<>((fid1, fid2)->fid1.get() - fid2.get());
-		}
-
-		public AutoBlockingQueue<Message> getOutgoing() {
-			return outgoing;
-		}
-
-		public void setOutgoing(AutoBlockingQueue<Message> outgoing) {
-			this.outgoing = outgoing;
+			this.registeredRemote = new TreeSet<>((fid1, fid2) -> fid1.get() - fid2.get());
 		}
 
 		public RemoteFileRegisteredFactory getRemoteFileRegisteredFactory() {
@@ -138,73 +151,53 @@ public class Uploader {
 			this.removeFilesMessageFactory = removeFilesMessageFactory;
 		}
 
-//		public boolean addRightNow(LocalFileRegistered newFile) {
-//			if (addCached(newFile) && registeredRemote.add(newFile.getFileId())) {
-//				NewFilesMessage newFilesMessage = newFilesMessageFactory.create();
-//				newFilesMessage.add(remoteFileRegisteredFactory.create(newFile));
-//				outgoing.add(newFilesMessage);
-//				return true;
-//			}
-//
-//			return false;
-//		}
-//
-//		public boolean removeRightNow(FileId fileId) throws IOException {
-//			if (removeCached(fileId) && registeredRemote.remove(fileId)) {
-//				RemoveFilesMessage removeFilesMessage = removeFilesMessageFactory.create();
-//				removeFilesMessage.add(fileId);
-//				outgoing.add(removeFilesMessage);
-//				return true;
-//			}
-//
-//			return false;
-//		}
-//		
-//		private boolean removeAndCloseReadable(FileId fileId) throws IOException {
-//			LocalFileReadable file = files.removeAndGet(fileId);
-//			
-//			if (file != null) {
-//				file.close();
-//			}
-//			
-//			return file == null;
-//		}
-
-		public void updateRemote() {
-			updateRemoteRemoveFiles();
-			updateRemoteNewFiles();
+		public void updateRemote(Messenger messenger, Uploader uploader) {
+			if (messenger.isConnectionEstablished()) {
+				updateRemoteRemoveFiles(messenger, uploader);
+				updateRemoteNewFiles(messenger, uploader);
+			}
 		}
-		
-		private void updateRemoteRemoveFiles() {
-			RemoveFilesMessage removeFilesMessage = removeFilesMessageFactory.create();
-			
+
+		private void updateRemoteRemoveFiles(Messenger messenger, Uploader uploader) {
+			List<FileId> idList = new ArrayList<>();
+			FileBase<LocalFileReadable> files = uploader.getFiles();
 			Iterator<FileId> iterRemote = registeredRemote.iterator();
-			while(iterRemote.hasNext()) {
+
+			while (iterRemote.hasNext()) {
 				FileId fileId = iterRemote.next();
-				
-				if(!files.contains(fileId)) {
+
+				if (!files.contains(fileId)) {
 					iterRemote.remove();
-					removeFilesMessage.add(fileId);
+					idList.add(fileId);
 				}
 			}
-			if(!removeFilesMessage.isEmpty()) {
-				outgoing.add(removeFilesMessage);
+
+			if (!idList.isEmpty()) {
+				RemoveFilesMessage removeFilesMessage = removeFilesMessageFactory.create();
+
+				removeFilesMessage.setList(idList);
+				messenger.send(removeFilesMessage);
 			}
 		}
-		
-		private void updateRemoteNewFiles() {
-			NewFilesMessage newFilesMessage = newFilesMessageFactory.create();
+
+		private void updateRemoteNewFiles(Messenger messenger, Uploader uploader) {
+			FileBase<LocalFileReadable> files = uploader.getFiles();
+			List<RemoteFileRegistered> registeredFiles = new ArrayList<>();
 
 			for (LocalFileReadable localFileReadable : files) {
 				if (registeredRemote.add(localFileReadable.getFileId())) {
-					newFilesMessage.add(remoteFileRegisteredFactory.create(localFileReadable));
+					registeredFiles.add(remoteFileRegisteredFactory.create(localFileReadable));
 				}
 			}
-			if(!newFilesMessage.isEmpty()) {
-				outgoing.add(newFilesMessage);
+
+			if (!registeredFiles.isEmpty()) {
+				NewFilesMessage newFilesMessage = newFilesMessageFactory.create();
+
+				newFilesMessage.setList(registeredFiles);
+				messenger.send(newFilesMessage);
 			}
 		}
-		
+
 		public void resetRemote() {
 			registeredRemote.clear();
 		}

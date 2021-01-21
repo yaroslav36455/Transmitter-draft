@@ -1,39 +1,42 @@
 package ua.itea.model.message;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-import ua.itea.model.FileBase;
+import ua.itea.model.Channel;
 import ua.itea.model.RemoteFileRegistered;
 
-public class NewFilesMessage implements LoaderMessage, Serializable,
-										Iterable<RemoteFileRegistered> {
-	private static final long serialVersionUID = -344337412506311091L;
+public class NewFilesMessage extends LoaderMessage implements Serializable {
+	private static final long serialVersionUID = 133901629814675679L;
 	private List<RemoteFileRegistered> registeredFiles;
 	
 	public NewFilesMessage() {
-		registeredFiles = new ArrayList<>();
+		/* empty */
 	}
 	
-	public boolean isEmpty() {
-		return registeredFiles.isEmpty();
-	}
-	
-	public void add(RemoteFileRegistered registered) {
-		registeredFiles.add(registered);
-	}
-
-	public Iterator<RemoteFileRegistered> iterator() {
-		return registeredFiles.iterator();
-	}
-	
-	public int size() {
-		return registeredFiles.size();
+	public NewFilesMessage(List<RemoteFileRegistered> registeredFiles) {
+		this.registeredFiles = registeredFiles;
 	}
 
 	public List<RemoteFileRegistered> getList() {
 		return registeredFiles;
 	}
+
+	public void setList(List<RemoteFileRegistered> registeredFiles) {
+		this.registeredFiles = registeredFiles;
+	}
+
+	public boolean isEmpty() {
+		return registeredFiles == null || registeredFiles.isEmpty();
+	}
+	
+	public int size() {
+		return isEmpty() ? 0 : registeredFiles.size();
+	}
+	
+	@Override
+	public void execute(Channel loader) {
+		loader.getDownloader().addAll(registeredFiles);
+	}
+
 }

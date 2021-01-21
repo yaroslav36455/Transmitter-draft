@@ -5,13 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ua.itea.model.factory.LocalFileWriteableFactory;
-import ua.itea.model.message.DataAnswer;
-import ua.itea.model.message.DataRequest;
 
 public class Downloader {
 	private LocalFileWriteableFactory localFileWriteableFactory;
 	private FileBase<LocalFileWriteable> files;
-	private LoadLimit loadLimit;
+	private LoadLimit downloadLimit;
+	private LoadLimit remoteUploadLimit;
 
 	public LocalFileWriteableFactory getLocalFileWriteableFactory() {
 		return localFileWriteableFactory;
@@ -30,29 +29,53 @@ public class Downloader {
 	}
 
 	public LoadLimit getLoadLimit() {
-		return loadLimit;
+		return downloadLimit;
 	}
 
 	public void setLoadLimit(LoadLimit downloadLimit) {
-		this.loadLimit = downloadLimit;
+		this.downloadLimit = downloadLimit;
+	}
+	
+	public void stop() {
+		closeAll();
+	}
+	
+	private void closeAll() {
+		for (LocalFileWriteable localFileWriteable : files) {
+			try {
+				if (localFileWriteable.isOpened()) {
+					localFileWriteable.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
-	public void save(DataAnswer dataAnswer) {
+	public void beginDownloading(List<FileId> idList) throws IOException {
+		for (FileId fileId : idList) {
+			files.getFile(fileId).open();
+		}
+	}
+
+	public void save(List<DataFileAnswer> dataFileAnswers) {
 		try {
-			for (DataFileAnswer dataFileAnswer : dataAnswer) {
+			for (DataFileAnswer dataFileAnswer : dataFileAnswers) {
 				LocalFileWriteable file = files.getFile(dataFileAnswer.getFileId());
 
-				if (file.isOpened()) {
-					file.write(dataFileAnswer.getDataBlock());
+				if(file.isClosed()) {
+					file.open();
 				}
+				
+				file.write(dataFileAnswer.getDataBlock());
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public DataRequest createRequest() {
-		DataRequest dataRequest = new DataRequest();
+	public List<DataFileRequest> createRequest() {
+		List<DataFileRequest> dataRequest = new ArrayList<>();
 		
 		try {
 			Priority totalPriority = totalPriotity();
@@ -60,11 +83,12 @@ public class Downloader {
 			for (LocalFileWriteable file : files) {
 				if (file.isOpened() && !file.isCompleted()) {
 					float percent = file.getPriority().percent(totalPriority);
-					int maxAllowed = (int) percent * loadLimit.getLimint();
+					int maxAllowed = (int) percent * downloadLimit.getLimint();
 
-					DataBlockInfo dataBlockInfo = file.createRequest(maxAllowed);
-
-					dataRequest.add(new DataFileRequest(file.getFileId(), dataBlockInfo));
+					if (maxAllowed > 0) {
+						DataBlockInfo dataBlockInfo = file.createRequest(maxAllowed);
+						dataRequest.add(new DataFileRequest(file.getFileId(), dataBlockInfo));						
+					}
 				}
 			}	
 		} catch (IOException e) {
@@ -72,6 +96,11 @@ public class Downloader {
 		}
 		
 		return dataRequest.isEmpty() ? null : dataRequest;
+	}
+	
+	public List<DataFileRequest> createRequest(List<DataFileAnswer> answers) {
+		
+		return null;
 	}
 
 	private Priority totalPriotity() {

@@ -53,19 +53,6 @@ public class GUIApplicationImpl extends Application implements Initializable {
 	
 	private GUIChannelProvider gcp;
 	
-	public GUIApplicationImpl() {		
-//		GUIConnectionInfoFactory gcif = new GUIConnectionInfoFactory();
-//		gicdf = new GUIIncomingConnectionDialogFactory(gcif);
-		
-//		channelBase = new ChannelBase();
-		
-//		ChannelProvider serverChannelProvider = new GUIServerChannelProvider(channelBase);
-//		serverFactory = new ServerFactory(serverChannelProvider);
-		
-//		ChannelProvider clientChannelProvider = new ChannelProvider(channelBase, new ClientChannelFactory());
-//		client = new Client(clientChannelProvider, new GUIClientSocketFactory());
-	}
-
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		gcp = new GUIChannelProvider(tabPane, new GUIChannelVBoxFactory());

@@ -5,9 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-import ua.itea.model.message.DataMessage;
 import ua.itea.model.message.Message;
-import ua.itea.model.message.NewFilesMessage;
 
 public abstract class Connection implements AutoCloseable {
 	private static final long KEY = (long) (Math.random() * Long.MAX_VALUE);
@@ -57,23 +55,23 @@ public abstract class Connection implements AutoCloseable {
 		return ois.readUTF();
 	}
 	
-	public void writeDataMessage(DataMessage message) throws IOException {
-		oos.writeObject(Mark.DATA_EXCHANGE);
-		oos.writeObject(message);
-	}
+//	public void writeDataMessage(DataMessage message) throws IOException {
+//		oos.writeObject(Mark.DATA_EXCHANGE);
+//		oos.writeObject(message);
+//	}
+//	
+//	public DataMessage readDataMessage() throws IOException, ClassNotFoundException {
+//		return (DataMessage) ois.readObject();
+//	}
 	
-	public DataMessage readDataMessage() throws IOException, ClassNotFoundException {
-		return (DataMessage) ois.readObject();
-	}
-	
-	public void writeNewFileMessage(NewFilesMessage message) throws IOException {
-		oos.writeObject(Mark.NEW_FILES);
-		oos.writeObject(message);
-	}
-	
-	public NewFilesMessage readNewFileMessage() throws ClassNotFoundException, IOException {
-		return (NewFilesMessage) ois.readObject();
-	}
+//	public void writeNewFileMessage(NewFilesMessage message) throws IOException {
+//		oos.writeObject(Mark.NEW_FILES);
+//		oos.writeObject(message);
+//	}
+//	
+//	public NewFilesMessage readNewFileMessage() throws ClassNotFoundException, IOException {
+//		return (NewFilesMessage) ois.readObject();
+//	}
 	
 	public void accept() throws IOException {
 		oos.writeObject(Mark.ACCEPT);

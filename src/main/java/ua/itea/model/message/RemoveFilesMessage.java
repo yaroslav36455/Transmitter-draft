@@ -1,39 +1,42 @@
 package ua.itea.model.message;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import ua.itea.model.FileId;
+import ua.itea.model.Channel;
 
-public class RemoveFilesMessage implements LoaderMessage, Serializable,
-										   Iterable<FileId> {
-	private static final long serialVersionUID = 8460909561097628165L;
+public class RemoveFilesMessage extends LoaderMessage implements Serializable {
+	private static final long serialVersionUID = -1205787736557141799L;
 	private List<FileId> idList;
 	
-	
 	public RemoveFilesMessage() {
-		idList = new ArrayList<>();
+		/* empty */
 	}
 	
-	public boolean isEmpty() {
-		return idList.isEmpty();
-	}
-	
-	public void add(FileId fileId) {
-		idList.add(fileId);
+	public RemoveFilesMessage(List<FileId> idList) {
+		this.idList = idList;
 	}
 
-	public Iterator<FileId> iterator() {
-		return idList.iterator();
-	}
-	
-	public int size() {
-		return idList.size();
-	}
-	
 	public List<FileId> getList() {
 		return idList;
 	}
+
+	public void setList(List<FileId> idList) {
+		this.idList = idList;
+	}
+
+	public boolean isEmpty() {
+		return idList == null || idList.isEmpty();
+	}
+	
+	public int size() {
+		return isEmpty() ? 0 : idList.size();
+	}
+	
+	@Override
+	public void execute(Channel loader) {
+		loader.getDownloader().removeAll(idList);
+	}
+
 }
